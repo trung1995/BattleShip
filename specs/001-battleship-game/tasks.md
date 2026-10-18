@@ -55,7 +55,7 @@ These paths come from [plan.md](plan.md#project-structure):
 **Purpose**: Project skeleton and a build that compiles and runs an empty test suite, with and
 without the engine.
 
-- [ ] T001 Create the directory skeleton from plan.md. It needs:
+- [X] T001 Create the directory skeleton from plan.md. It needs:
   - `src/core/include/bs/core/`, `src/core/src/`, `src/app/include/bs/app/`, `src/app/src/`
   - `src/game/{scenes,nodes,adapters,main/mac,main/win32}/`
   - `Resources/{i18n,fonts,audio}/`
@@ -63,7 +63,7 @@ without the engine.
 
   Then add `.gitignore` at the repo root, ignoring `build/`, `*.xcuserstate`, `xcuserdata/`,
   `.vs/` and `CMakeUserPresets.json`.
-- [ ] T002 Write the top-level `CMakeLists.txt`:
+- [X] T002 Write the top-level `CMakeLists.txt`:
   - `cmake_minimum_required(VERSION 3.16)` and `project(BattleShip LANGUAGES CXX C)`.
   - `CMAKE_CXX_STANDARD 14`, `CMAKE_CXX_STANDARD_REQUIRED ON`, `CMAKE_CXX_EXTENSIONS OFF`.
   - Options `BATTLESHIP_BUILD_GAME` (default ON) and `BATTLESHIP_BUILD_TESTS` (default ON).
@@ -71,23 +71,23 @@ without the engine.
   - `add_subdirectory(src/core)` and `add_subdirectory(src/app)`.
   - `enable_testing()` and `add_subdirectory(tests)` when tests are on.
   - `add_subdirectory(src/game)` only when `BATTLESHIP_BUILD_GAME`.
-- [ ] T003 [P] Create `cmake/Warnings.cmake`, defining the INTERFACE target
+- [X] T003 [P] Create `cmake/Warnings.cmake`, defining the INTERFACE target
   `battleship_warnings`:
   - Clang/AppleClang/GCC: `-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion
     -Werror`.
   - MSVC: `/W4 /WX /permissive- /utf-8`.
-- [ ] T004 [P] Create `cmake/GoogleTest.cmake`. It uses `FetchContent_Declare(googletest URL
+- [X] T004 [P] Create `cmake/GoogleTest.cmake`. It uses `FetchContent_Declare(googletest URL
   https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz URL_HASH SHA256=<hash>)`.
   Compute and record the real hash. Set `gtest_force_shared_crt ON`, `INSTALL_GTEST OFF` and
   `include(GoogleTest)`. Overriding with `FETCHCONTENT_SOURCE_DIR_GOOGLETEST` must work for
   offline builds.
-- [ ] T005 Create `src/core/CMakeLists.txt` with the STATIC library `battleship_core` (start
+- [X] T005 Create `src/core/CMakeLists.txt` with the STATIC library `battleship_core` (start
   with `src/core/src/Version.cpp`). It has a PUBLIC include dir `src/core/include` and links
   PRIVATE `battleship_warnings`. It must have no engine include path.
-- [ ] T006 Create `src/app/CMakeLists.txt` with the STATIC library `battleship_app` (start
+- [X] T006 Create `src/app/CMakeLists.txt` with the STATIC library `battleship_app` (start
   with `src/app/src/Version.cpp`). It links PUBLIC `battleship_core` and PRIVATE
   `battleship_warnings`, and must have no engine include path.
-- [ ] T007 Create `tests/CMakeLists.txt`:
+- [X] T007 Create `tests/CMakeLists.txt`:
   - Include `cmake/GoogleTest.cmake`.
   - Executable `battleship_tests` built from globbed `tests/core/*.cpp` and `tests/app/*.cpp`,
     with include dir `tests/fakes`. It links `battleship_app`, `GTest::gtest_main`,
@@ -100,14 +100,14 @@ without the engine.
 
   Verify `cmake -S . -B build/tests -DBATTLESHIP_BUILD_GAME=OFF && cmake --build build/tests
   && ctest --test-dir build/tests` passes with no cocos2d-x present.
-- [ ] T008 [P] Create `cmake/CheckNoEngineIncludes.cmake`. This `cmake -P` script scans every
+- [X] T008 [P] Create `cmake/CheckNoEngineIncludes.cmake`. This `cmake -P` script scans every
   file under `src/core` and `src/app` for `cocos` (case-insensitive) in `#include` lines and
   fails if it finds any. Register it in `tests/CMakeLists.txt` as CTest `architecture.no_engine_in_core_or_app`.
   This enforces Principle I.
-- [ ] T009 Add the cocos2d-x submodule at `third_party/cocos2d-x`, pinned to tag `cocos2d-x-4.0`
+- [X] T009 Add the cocos2d-x submodule at `third_party/cocos2d-x`, pinned to tag `cocos2d-x-4.0`
   (`.gitmodules`). Run `python3 third_party/cocos2d-x/download-deps.py --remove-download yes`
   and confirm `third_party/cocos2d-x/external/` is populated.
-- [ ] T010 Create `src/game/CMakeLists.txt`, modelled on the cocos2d-x 4.0 `cpp-template`
+- [X] T010 Create `src/game/CMakeLists.txt`, modelled on the cocos2d-x 4.0 `cpp-template`
   CMake:
   - Set `COCOS2DX_ROOT_PATH` to `third_party/cocos2d-x`, add its `cmake/Modules` to
     `CMAKE_MODULE_PATH`, `include(CocosBuildSet)`, and
@@ -121,10 +121,10 @@ without the engine.
     unless `CMAKE_GENERATOR_PLATFORM` is `Win32` (research R1).
   - A placeholder `src/game/main/...` plus an empty `AppDelegate` must build an app that opens
     a blank 1280 × 720 window on macOS.
-- [ ] T011 [P] Add `Resources/fonts/NotoSans-Regular.ttf`, `Resources/fonts/NotoSans-Bold.ttf`
+- [X] T011 [P] Add `Resources/fonts/NotoSans-Regular.ttf`, `Resources/fonts/NotoSans-Bold.ttf`
   and `Resources/fonts/OFL.txt` (Noto Sans, SIL Open Font License, with Latin + Cyrillic +
   Vietnamese coverage; research R10).
-- [ ] T012 [P] Add `.clang-format` at the repo root (based on LLVM, `ColumnLimit: 100`,
+- [X] T012 [P] Add `.clang-format` at the repo root (based on LLVM, `ColumnLimit: 100`,
   `IndentWidth: 4`) and `.editorconfig` (UTF-8, LF, final newline).
 
 **Checkpoint**: `BATTLESHIP_BUILD_GAME=OFF` builds and the tests pass. The game target opens
@@ -141,26 +141,26 @@ an empty window.
 
 ### Interfaces and test doubles (no logic, so no test-first needed)
 
-- [ ] T013 [P] Create `src/core/include/bs/core/Random.h` with
+- [X] T013 [P] Create `src/core/include/bs/core/Random.h` with
   `class IRandom { virtual ~IRandom(); virtual int nextInt(int lo, int hi) = 0; }`, where the
   range is uniform and inclusive and the precondition is `lo <= hi`. Declare `class
   Mt19937Random final : public IRandom` and the template `shuffle(std::vector<T>&, IRandom&)`
   (Fisher–Yates via `nextInt`) per core-api.md.
-- [ ] T014 [P] Create `src/app/include/bs/app/Ports.h` with `ISettingsStore`,
+- [X] T014 [P] Create `src/app/include/bs/app/Ports.h` with `ISettingsStore`,
   `IResourceReader`, `IAudioPlayer`, `enum class SoundId { Shot, Miss, Hit, Sunk, Help,
   Victory, Defeat, UiClick }`, `enum class MusicId { Menu, Battle }` and `INavigator`, copied
   verbatim from contracts/app-api.md.
-- [ ] T015 [P] Create the shared types and the service interfaces:
+- [X] T015 [P] Create the shared types and the service interfaces:
   - `src/core/include/bs/core/Types.h`: `enum class Side { Player, Computer }` and
     `enum class ShotResult { Miss, Hit, Sunk }`. The core and app layers both use these, and
     `Board.h` (US1) includes this header.
   - `src/app/include/bs/app/Services.h`: `Language`, `Screen`, `NameResult`, `SubscriptionId`,
     the opaque declaration `enum class TextKey : int;`, and the interfaces `ISettings`,
     `ILocalizer` and `IGameAudio`, copied verbatim from contracts/app-api.md (Principle VI).
-- [ ] T016 [P] Create `tests/fakes/ScriptedRandom.h`. It implements `IRandom`, returns queued
+- [X] T016 [P] Create `tests/fakes/ScriptedRandom.h`. It implements `IRandom`, returns queued
   values in order, falls back to `lo` when the queue is empty, and uses `ADD_FAILURE` if a
   queued value is outside `[lo, hi]`.
-- [ ] T017 [P] Create the test doubles for the app ports:
+- [X] T017 [P] Create the test doubles for the app ports:
   - `tests/fakes/InMemorySettingsStore.h`: a map-backed `ISettingsStore` that counts
     `flush()` calls.
   - `tests/fakes/FakeResourceReader.h`: maps a path to contents, and `readText` returns false
@@ -172,13 +172,13 @@ an empty window.
 
 ### Tests first (write, run, see them FAIL)
 
-- [ ] T018 [P] Write `tests/core/CoordTest.cpp`:
+- [X] T018 [P] Write `tests/core/CoordTest.cpp`:
   - `Coord::isOnBoard` is true only for row and col in 0–9, with `kBoardSize == 10`.
   - Orthogonal neighbours: a corner gives 2, an edge 3, the centre 4.
   - All neighbours including diagonals: a corner gives 3, an edge 5, the centre 8.
   - `ShipPlacement::cells()`: Horizontal grows along `col`, Vertical along `row`, and the
     origin is the top-left cell.
-- [ ] T019 [P] Write `tests/core/Mt19937RandomTest.cpp`:
+- [X] T019 [P] Write `tests/core/Mt19937RandomTest.cpp`:
   - The same seed gives the same 1,000-value sequence.
   - `nextInt(lo, hi)` covers both `lo` and `hi` within 10,000 draws and never leaves the range.
   - `nextInt(5, 5) == 5`.
@@ -188,7 +188,7 @@ an empty window.
     applied to the first raw `std::mt19937(42)` outputs.
   - Assert the standard check value: the 10,000th raw output of a default-seeded
     `std::mt19937` is `4123659995`.
-- [ ] T020 [P] Write `tests/core/FleetTest.cpp`:
+- [X] T020 [P] Write `tests/core/FleetTest.cpp`:
   - `fleetSpec()` is `{4,3,3,2,2,2,1,1,1,1}`, with ShipId 0–9 in that order.
   - `place`, `remove`, `clear`, `isPlaced`, `isComplete` and `missingShips` work.
   - `canPlace` returns `OutOfBounds` when a cell is off the board.
@@ -200,14 +200,14 @@ an empty window.
   - An illegal `place` returns the error and keeps the ship's previous placement.
   - A ShipId outside 0–9 gives `ShipIdOutOfRange`.
   - Ships touching the board edge are legal.
-- [ ] T021 [P] Write `tests/app/Utf8Test.cpp`:
+- [X] T021 [P] Write `tests/app/Utf8Test.cpp`:
   - `codePointCount("Người chơi") == 10`, `codePointCount("Компьютер") == 9` and
     `codePointCount("") == 0`.
   - `truncateCodePoints(s, 20)` never splits a multibyte sequence, and leaves a string of
     20 or fewer code points unchanged.
   - `trim` removes ASCII whitespace and Unicode spaces (U+00A0, U+2003, U+3000) at both ends,
     keeps inner spaces, and turns a whitespace-only string into `""`.
-- [ ] T022 [P] Write `tests/app/StringTableTest.cpp`, covering the grammar in
+- [X] T022 [P] Write `tests/app/StringTableTest.cpp`, covering the grammar in
   contracts/localization.md:
   - `key = value` with the value trimmed; blank lines and `#` comments are ignored.
   - Keys match `[a-z0-9_]+(\.[a-z0-9_]+)*`, and `\n` in a value becomes a newline.
@@ -215,16 +215,16 @@ an empty window.
   - A duplicate key gives a load error naming the key and line.
   - A line without `=` gives a load error.
   - `placeholders(key)` returns the set of `{ident}` names.
-- [ ] T023 [P] Write `tests/app/LocalizerTest.cpp`, using `FakeResourceReader`:
+- [X] T023 [P] Write `tests/app/LocalizerTest.cpp`, using `FakeResourceReader`:
   - Construction loads `i18n/en.lang`, and `text(key)` returns its value.
   - A missing key returns the key's name, not a crash.
   - `format(key, {{"name","Ann"}})` substitutes `{name}`.
   - `setLanguage(Ru)` loads `i18n/ru.lang` and calls every subscriber exactly once **before it
     returns**. After `unsubscribe`, that subscriber is not called.
-  - `displayName(Player, settings)` returns `name.playerDefault` when `storedPlayerName()` is
+  - `displayName(Player, settings)` returns `name.player_default` when `storedPlayerName()` is
     `""`, and otherwise the stored name.
   - `displayName(Computer, …)` returns `name.computer` in the current language.
-- [ ] T024 [P] Write `tests/app/SettingsServiceTest.cpp`, using `InMemorySettingsStore`:
+- [X] T024 [P] Write `tests/app/SettingsServiceTest.cpp`, using `InMemorySettingsStore`:
   - **Defaults**: `soundEnabled == true`, `musicEnabled == true`, `language == En` and
     `storedPlayerName == ""`.
   - Each setter writes immediately to the keys `settings.sound`, `settings.music`,
@@ -236,7 +236,7 @@ an empty window.
     - truncates more than 20 code points to exactly 20, reporting `truncated`;
     - keeps a 20-code-point Vietnamese name unchanged.
   - A new service on the same store reads back the persisted values.
-- [ ] T025 [P] Write `tests/app/AudioServiceTest.cpp`, using `MockAudioPlayer` and a real
+- [X] T025 [P] Write `tests/app/AudioServiceTest.cpp`, using `MockAudioPlayer` and a real
   `SettingsService`:
   - `onShot(Miss|Hit|Sunk)` plays `Miss|Hit|Sunk`. `onHelp` plays `Help`.
     `onGameOver(true|false)` plays `Victory|Defeat`.
@@ -245,7 +245,7 @@ an empty window.
   - With music off, effects still play; with sound off, music still plays.
   - `onSettingsChanged()` stops music at once when it's turned off, and restarts the current
     screen's music when it's turned on.
-- [ ] T026 [P] Write `tests/app/LocalizationCompletenessTest.cpp`:
+- [X] T026 [P] Write `tests/app/LocalizationCompletenessTest.cpp`:
   - It reads `BATTLESHIP_RESOURCES_DIR "/i18n/{en,ru,vi}.lang"` from disk.
   - All three key sets equal the key list in `TextKeys.h` (`bs::app::allTextKeys()`), with no
     extras and none missing.
@@ -255,27 +255,27 @@ an empty window.
 
 ### Implementation (make the tests above pass)
 
-- [ ] T027 [P] Create `src/core/include/bs/core/Coord.h` and `src/core/src/Coord.cpp` with
+- [X] T027 [P] Create `src/core/include/bs/core/Coord.h` and `src/core/src/Coord.cpp` with
   `kBoardSize = 10`, `Coord{row,col}` (with `isOnBoard`, `==`, `<`), `orthogonalNeighbours`,
   `allNeighbours`, `Orientation`, and `ShipPlacement{origin,length,orientation}::cells()`.
   This makes T018 pass.
-- [ ] T028 [P] Create `src/core/src/Mt19937Random.cpp`. `Mt19937Random(std::uint32_t seed)`
+- [X] T028 [P] Create `src/core/src/Mt19937Random.cpp`. `Mt19937Random(std::uint32_t seed)`
   wraps `std::mt19937`, and `nextInt` uses rejection sampling on raw 32-bit output so results
   are identical across standard libraries. Add it to `src/core/CMakeLists.txt`. This makes
   T019 pass.
-- [ ] T029 Create `src/core/include/bs/core/Fleet.h` and `src/core/src/Fleet.cpp` with
+- [X] T029 Create `src/core/include/bs/core/Fleet.h` and `src/core/src/Fleet.cpp` with
   `ShipId`, `fleetSpec()`, `enum class PlacementError { None, OutOfBounds, Overlaps, Touches,
   ShipIdOutOfRange }` and `class Fleet`, as in core-api.md. The rules are the data-model §2
   PlacementRules, checked in the order OutOfBounds → Overlaps → Touches, and touching includes
   corners. This depends on T027 and makes T020 pass.
-- [ ] T030 [P] Create `src/app/include/bs/app/Utf8.h` and `src/app/src/Utf8.cpp` with
+- [X] T030 [P] Create `src/app/include/bs/app/Utf8.h` and `src/app/src/Utf8.cpp` with
   `codePointCount`, `truncateCodePoints` and `trim` (Unicode whitespace). This makes T021
   pass.
-- [ ] T031 [P] Create `src/app/include/bs/app/StringTable.h` and
+- [X] T031 [P] Create `src/app/include/bs/app/StringTable.h` and
   `src/app/src/StringTable.cpp`. `StringTable::parse(const std::string&)` returns a result
   with a status, an error message and line number, and the map. It also provides `find(key)`
   and `placeholders(key)`. This makes T022 pass.
-- [ ] T032 Create `src/app/include/bs/app/TextKeys.h`, `src/app/src/TextKeys.cpp` and the
+- [X] T032 Create `src/app/include/bs/app/TextKeys.h`, `src/app/src/TextKeys.cpp` and the
   initial `Resources/i18n/en.lang`, `ru.lang` and `vi.lang`.
   - **Code**: `enum class TextKey : int { … }` (the base type must match the opaque
     declaration in `Services.h`, T015), plus `const char* keyName(TextKey)` and
@@ -285,7 +285,7 @@ an empty window.
     | Key | en | ru | vi |
     |---|---|---|---|
     | `name.computer` | Computer | Компьютер | Máy tính |
-    | `name.playerDefault` | Player | Игрок | Người chơi |
+    | `name.player_default` | Player | Игрок | Người chơi |
     | `lang.en` / `lang.ru` / `lang.vi` | English / Русский / Tiếng Việt | same | same |
     | `menu.new_game` | New Game | Новая игра | Trò chơi mới |
     | `menu.settings` | Settings | Настройки | Cài đặt |
@@ -294,7 +294,7 @@ an empty window.
     | `app.title` | Battleship | Морской бой | Hải chiến |
 
   This makes T026 pass.
-- [ ] T033 Create `src/app/include/bs/app/Localizer.h` and `src/app/src/Localizer.cpp`, with
+- [X] T033 Create `src/app/include/bs/app/Localizer.h` and `src/app/src/Localizer.cpp`, with
   implementing `ILocalizer` (`Language` comes from `Services.h`), with these members:
   - the constructor `(IResourceReader&, Language)`;
   - `setLanguage`, `language()`, `text(TextKey)` and `format(TextKey, args)`;
@@ -302,16 +302,16 @@ an empty window.
   - `displayName(bs::core::Side, const ISettings&)`, with `Side` from `bs/core/Types.h`.
 
   This depends on T031, T032 and T034, and makes T023 pass.
-- [ ] T034 Create `src/app/include/bs/app/SettingsService.h` and
+- [X] T034 Create `src/app/include/bs/app/SettingsService.h` and
   `src/app/src/SettingsService.cpp`, implementing `ISettings` (`NameResult` comes from
   `Services.h`).
   - **Defaults**: "sound on, music on, language `en`, name `""` (displayed as
-    `name.playerDefault`)".
+    `name.player_default`)".
   - **Validation**: the name is "trimmed; empty → reset; at most 20 code points".
   - **Language**: an "unknown value falls back to `en`".
 
   This depends on T030 and makes T024 pass.
-- [ ] T035 Create `src/app/include/bs/app/AudioService.h` and `src/app/src/AudioService.cpp`
+- [X] T035 Create `src/app/include/bs/app/AudioService.h` and `src/app/src/AudioService.cpp`
   implementing `IGameAudio`, with the constructor `(IAudioPlayer&, const ISettings&)`
   (`Screen` comes from `Services.h`). The Menu and Settings screens
   play `MusicId::Menu`, and Placement and Battle play `MusicId::Battle`. The methods are those
@@ -319,17 +319,18 @@ an empty window.
 
 ### Game shell (rendering layer, so TDD is not required; keep it thin)
 
-- [ ] T036 [P] Create the engine adapters:
+- [X] T036 [P] Create the engine adapters:
   - `src/game/adapters/UserDefaultSettingsStore.{h,cpp}`: `ISettingsStore` over
     `cocos2d::UserDefault`.
   - `src/game/adapters/FileUtilsResourceReader.{h,cpp}`: `IResourceReader` over
     `FileUtils::getStringFromFile`, which returns false on an empty or missing file.
-- [ ] T037 [P] Create `src/game/adapters/CocosAudioPlayer.{h,cpp}`: `IAudioPlayer` over
+- [X] T037 [P] Create `src/game/adapters/CocosAudioPlayer.{h,cpp}`: `IAudioPlayer` over
   `cocos2d::experimental::AudioEngine`, mapping `SoundId` and `MusicId` to
-  `audio/<name>.ogg` and keeping the current music audio ID. Add CC0-licensed placeholder
-  assets `Resources/audio/{shot,miss,hit,sunk,help,victory,defeat,click,menu,battle}.ogg`, and
-  record their sources and licences in `Resources/audio/LICENSES.md`.
-- [ ] T038 Create `src/game/GameServices.{h,cpp}`, the composition root. It owns these with
+  `audio/<name>.mp3` and keeping the current music audio ID. Add CC0 placeholder assets
+  `Resources/audio/{shot,miss,hit,sunk,help,victory,defeat,click,menu,battle}.mp3` (MP3 is the
+  only format both engine audio backends decode; research R13), and record their sources and
+  licences in `Resources/audio/LICENSES.md`.
+- [X] T038 Create `src/game/GameServices.{h,cpp}`, the composition root. It owns these with
   `std::unique_ptr`:
   - the adapters;
   - `Mt19937Random`, seeded from `std::random_device`;
@@ -339,10 +340,10 @@ an empty window.
   Scenes receive `GameServices&` and use only its interface accessors (`ISettings&`,
   `ILocalizer&`, `IGameAudio&`). No scene calls a cocos2d-x singleton for things a port
   covers.
-- [ ] T039 Create `src/game/adapters/SceneNavigator.{h,cpp}`. It implements `INavigator` with
+- [X] T039 Create `src/game/adapters/SceneNavigator.{h,cpp}`. It implements `INavigator` with
   `Director::replaceScene` and `TransitionFade(0.2)`. `showSettings`, `showPlacement` and
   `showBattle` log "not yet available" and stay on the menu until the stories add them.
-- [ ] T040 Create `src/game/AppDelegate.{h,cpp}`, `src/game/main/mac/main.mm`, its
+- [X] T040 Create `src/game/AppDelegate.{h,cpp}`, `src/game/main/mac/main.mm`, its
   `Info.plist`, and `src/game/main/win32/main.cpp`.
   - `GLViewImpl::createWithRect` at 1280 × 720, resizable.
   - `setDesignResolutionSize(1280, 720, ResolutionPolicy::SHOW_ALL)`.
@@ -351,14 +352,14 @@ an empty window.
     `glfwSetWindowTitle(static_cast<GLViewImpl*>(glview)->getWindow(), …)` (FR-040).
   - Build `GameServices`, then show `MenuScene`.
   - On `applicationDidEnterBackground`, pause audio.
-- [ ] T041 [P] Create `src/game/nodes/LocalizedLabel.{h,cpp}`. It is a `cocos2d::Node`
+- [X] T041 [P] Create `src/game/nodes/LocalizedLabel.{h,cpp}`. It is a `cocos2d::Node`
   wrapping `Label::createWithTTF("fonts/NotoSans-Regular.ttf", …)`, or `-Bold` when asked. It
   is bound to a `TextKey` plus an optional args provider `std::function<std::map<…>()>`.
   - It takes an `ILocalizer&`, subscribes in `onEnter`, unsubscribes in `onExit`, and re-applies its
     text when the language changes (FR-040).
   - It supports a maximum width with `Label::Overflow::SHRINK`, so the longest translation
     never clips.
-- [ ] T042 Create `src/game/scenes/MenuScene.{h,cpp}`:
+- [X] T042 Create `src/game/scenes/MenuScene.{h,cpp}`:
   - The title is `app.title`. The buttons are `menu.new_game`, `menu.settings` and
     `menu.quit`, each a `LocalizedLabel` on a `ui::Button`.
   - Quit calls `Director::end()`.
@@ -382,7 +383,7 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
 
 ### Tests for User Story 1 (write first, confirm they FAIL)
 
-- [ ] T043 [P] [US1] Write `tests/core/BoardTest.cpp`, for a `Board` built from a complete
+- [X] T043 [P] [US1] Write `tests/core/BoardTest.cpp`, for a `Board` built from a complete
   `Fleet`:
   - `shoot(c)` on an empty cell gives `Miss`. On a ship cell it gives `Hit`, and `Sunk` when
     it hits the last cell of that ship.
@@ -393,14 +394,14 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
   - `isFiredUpon` is true for Miss, Hit and Marked.
   - `remainingCells()` goes from 20 to 0.
   - `shipState(id)` reports Intact, Damaged or Sunk.
-- [ ] T044 [P] [US1] Write `tests/core/TargetViewTest.cpp`. The projection follows data-model
+- [X] T044 [P] [US1] Write `tests/core/TargetViewTest.cpp`. The projection follows data-model
   §2:
   - Untouched → `Unknown`, **including unrevealed ship cells** (Principle III).
   - Miss → `Miss`; Hit on an unsunk ship → `Hit`; Hit on a sunk ship → `Sunk`;
     Marked → `Marked`.
   - `GameSession::viewOf(Computer)` never returns anything other than `Unknown` for any
     untouched computer ship cell.
-- [ ] T045 [P] [US1] Write `tests/core/GameSessionTurnTest.cpp`, for a session with a known
+- [X] T045 [P] [US1] Write `tests/core/GameSessionTurnTest.cpp`, for a session with a known
   computer fleet:
   - It starts in phase `Placement` with `currentTurn == Player`.
   - `startBattle()` returns `FleetIncomplete` with 9 ships and `Started` with 10. A second
@@ -414,34 +415,34 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
     with no further shot accepted (FR-023).
   - `changes` contains the shot cell, the sunk ship's cells re-labelled `Sunk`, and every
     auto-`Marked` cell.
-- [ ] T046 [P] [US1] Write `tests/core/AutoPlacerTest.cpp`:
+- [X] T046 [P] [US1] Write `tests/core/AutoPlacerTest.cpp`:
   - `BacktrackingPlacer::placeAll(rng)` returns `Ok` with a complete fleet that passes the
     PlacementRules check for every ship.
   - The same seed gives the same fleet, and different seeds give different fleets in at least
     95 of 100 cases.
   - A timing test: 100 calls each finish under 1 s (SC-003), with the median under 5 ms.
-- [ ] T047 [P] [US1] Write `tests/core/AutoPlacerBulkTest.cpp` for `placeAll` over 10,000
+- [X] T047 [P] [US1] Write `tests/core/AutoPlacerBulkTest.cpp` for `placeAll` over 10,000
   seeds: 100% complete, exact `fleetSpec` composition, no overlap or touch (SC-002, full
   placement part).
-- [ ] T048 [P] [US1] Write `tests/core/RandomStrategyTest.cpp` and
+- [X] T048 [P] [US1] Write `tests/core/RandomStrategyTest.cpp` and
   `tests/core/StrategyContractTest.cpp`.
   - **StrategyContractTest**: a typed test that is instantiated only with `RandomStrategy`
     for now. It checks that the strategy always returns `Kind::Shot` at an `Unknown` cell,
     never `Help`, and never repeats a cell when 100 shots are applied to a fresh view.
   - **RandomStrategyTest**: with `ScriptedRandom`, the chosen cell is the n-th `Unknown` cell
     in row-major order, and earlier Hit cells do not influence the choice (FR-033).
-- [ ] T049 [P] [US1] Write `tests/app/GameSetupTest.cpp`, using `BacktrackingPlacer` and a
+- [X] T049 [P] [US1] Write `tests/app/GameSetupTest.cpp`, using `BacktrackingPlacer` and a
   seeded `Mt19937Random`:
   - `newSession(d)` returns a session in phase `Placement` with difficulty `d`.
   - The computer fleet is complete and legal, and the player fleet is empty.
   - The same seed gives the same computer fleet.
   - A `PlacementController` built on `session->playerFleet()` changes the session's own
     player fleet: after `autoPlaceAll()`, `session->startBattle()` returns `Started`.
-- [ ] T050 [P] [US1] Write `tests/app/PlacementControllerTest.cpp` (US1 part):
+- [X] T050 [P] [US1] Write `tests/app/PlacementControllerTest.cpp` (US1 part):
   - `autoPlaceAll()` fills all 10 ships.
   - `canStartBattle()` is false with fewer than 10 ships and true with 10.
   - `dockShips()` is empty after `autoPlaceAll()`.
-- [ ] T051 [P] [US1] Write `tests/app/BattleControllerTest.cpp` (US1 part), using a seeded
+- [X] T051 [P] [US1] Write `tests/app/BattleControllerTest.cpp` (US1 part), using a seeded
   session, `RandomStrategy`, `ScriptedRandom` and `MockGameAudio`:
   - It starts in mode `AwaitingPlayer`.
   - `onPlayerFire` on a miss returns `Applied` with the changes and moves to
@@ -456,7 +457,7 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
   - The last hit moves to `GameOver`.
   - `turnIndicator()` reflects the current side.
   - `MockGameAudio` receives `onShot` for each result and `onGameOver(playerWon)`.
-- [ ] T052 [P] [US1] Write `tests/sim/AiSimulationTest.cpp` (Easy part, label `sim`):
+- [X] T052 [P] [US1] Write `tests/sim/AiSimulationTest.cpp` (Easy part, label `sim`):
   - A headless loop runs `GameSession` with two strategies, both sides firing via
     `viewOf(opponent)`.
   - 1,000 seeded Easy-vs-Easy games produce zero rejected actions, and every game ends with
@@ -464,7 +465,7 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
 
 ### Implementation for User Story 1
 
-- [ ] T053 [US1] Create `src/core/include/bs/core/Board.h` and `src/core/src/Board.cpp`:
+- [X] T053 [US1] Create `src/core/include/bs/core/Board.h` and `src/core/src/Board.cpp`:
   - `enum class CellShotState { Untouched, Miss, Hit, Marked }`. `ShotResult` comes from
     `Types.h`.
   - `Board(const Fleet&)`, `shoot(Coord)` (which returns the result, the sunk ship ID and the
@@ -474,14 +475,14 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
     `bool deferMarking` parameter, default false).
 
   This depends on T029 and makes T043 pass.
-- [ ] T054 [US1] Create the session types and the public view:
+- [X] T054 [US1] Create the session types and the public view:
   - `src/core/include/bs/core/GameSession.h`: `Difficulty`, `Phase`, `Knowledge`,
     `ITargetView`, `CellChange`, `ActionStatus`, `ShotOutcome` and `StartStatus`, as in
     core-api.md.
   - `src/core/src/TargetView.cpp`: a concrete `TargetView : ITargetView` over a `const Board&`.
 
   This makes T044 pass.
-- [ ] T055 [US1] Implement `GameSession` in `src/core/src/GameSession.cpp`:
+- [X] T055 [US1] Implement `GameSession` in `src/core/src/GameSession.cpp`:
   - the constructor `(Difficulty, Fleet computerFleet)`;
   - `playerFleet()`, which throws `std::logic_error` when phase != Placement;
   - `startBattle`, `fire` with the full rejection table, `phase`, `currentTurn`, `winner`,
@@ -489,7 +490,7 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
   - `helpAvailable` returns true for now, and `useHelp` is added in US4.
 
   This depends on T053 and T054, and makes T045 pass.
-- [ ] T056 [US1] Create `src/core/include/bs/core/AutoPlacer.h` and
+- [X] T056 [US1] Create `src/core/include/bs/core/AutoPlacer.h` and
   `src/core/src/BacktrackingPlacer.cpp`:
   - `AutoPlaceStatus`, `AutoPlaceResult` and the `IFleetPlacer` interface.
   - `BacktrackingPlacer::placeAll`: a randomized complete backtracking search, largest ship
@@ -498,21 +499,21 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
   - Declare `placeRemaining` so that it returns `CannotFit` until US2.
 
   This makes T046 and T047 pass.
-- [ ] T057 [US1] Create `src/core/include/bs/core/Ai.h`, `src/core/src/RandomStrategy.cpp`
+- [X] T057 [US1] Create `src/core/include/bs/core/Ai.h`, `src/core/src/RandomStrategy.cpp`
   and `src/core/src/StrategyFactory.cpp`:
   - `AiAction`, the `ITargetingStrategy` interface and `RandomStrategy`, as in core-api.md.
   - `makeStrategy(Difficulty, IRandom&)` returns a `RandomStrategy` for Easy, and throws
     `std::logic_error("not implemented")` for Medium and Hard until US3.
 
   This makes T048 and T052 pass.
-- [ ] T058 [US1] Create `src/app/include/bs/app/GameSetup.h` and `src/app/src/GameSetup.cpp`,
+- [X] T058 [US1] Create `src/app/include/bs/app/GameSetup.h` and `src/app/src/GameSetup.cpp`,
   with the constructor `(const IFleetPlacer&, IRandom&)` and `newSession(Difficulty)`. It
   places the computer fleet with `placeAll` and returns
   `std::make_unique<GameSession>(difficulty, fleet)`. This makes T049 pass.
-- [ ] T059 [US1] Create `src/app/include/bs/app/PlacementController.h` and
+- [X] T059 [US1] Create `src/app/include/bs/app/PlacementController.h` and
   `src/app/src/PlacementController.cpp`, with the constructor `(Fleet&, const IFleetPlacer&,
   IRandom&)`, `autoPlaceAll()`, `canStartBattle()` and `dockShips()`. The fleet passed in is always `session.playerFleet()`. This makes T050 pass.
-- [ ] T060 [US1] Create `src/app/include/bs/app/BattleController.h` and
+- [X] T060 [US1] Create `src/app/include/bs/app/BattleController.h` and
   `src/app/src/BattleController.cpp`:
   - `enum class Mode { AwaitingPlayer, PlayerHelpTargeting, ComputerActing, ConfirmExit,
     GameOver }`.
@@ -523,7 +524,7 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
   - `onPlayerFire`, `tick` and `turnIndicator`.
 
   This makes T051 pass.
-- [ ] T061 [US1] Add the US1 strings to `TextKeys.h` and all three `.lang` files:
+- [X] T061 [US1] Add the US1 strings to `TextKeys.h` and all three `.lang` files:
   - `placement.title`, `placement.auto_all`, `placement.start`,
     `placement.error.fleet_incomplete`
   - `battle.turn.player`, `battle.turn.computer` (with `{name}`), `battle.board.own`,
@@ -533,7 +534,7 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
   - `gameover.new_game`, `gameover.menu`
 
   T026 must stay green.
-- [ ] T062 [P] [US1] Create `src/game/nodes/BoardNode.{h,cpp}`. It draws a 10 × 10 grid with
+- [X] T062 [P] [US1] Create `src/game/nodes/BoardNode.{h,cpp}`. It draws a 10 × 10 grid with
   `DrawNode`, with the numerals 1–10 labelling both the columns and the rows (generated in
   code; they read the same in every language). It renders the
   `Knowledge` states:
@@ -544,7 +545,7 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
   It can optionally draw its own ships from a `const Fleet&`, maps a mouse position to a
   `Coord` (`cellAt(Vec2) -> bool + Coord`), and applies a `std::vector<CellChange>` as an
   incremental redraw in the same frame (SC-009).
-- [ ] T063 [US1] Create `src/game/scenes/PlacementScene.{h,cpp}` (MVP form):
+- [X] T063 [US1] Create `src/game/scenes/PlacementScene.{h,cpp}` (MVP form):
   - The player `BoardNode` and the buttons `placement.auto_all`, `placement.start` and
     `common.back`.
   - On enter, it calls `GameSetup::newSession(difficulty)`, stores the session in
@@ -556,7 +557,7 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
   - Implement `SceneNavigator::showPlacement`, with `MenuScene` New Game →
     `showPlacement(Difficulty::Easy)`.
   - Add `std::unique_ptr<GameSession> currentSession` and a `GameSetup` to `GameServices`.
-- [ ] T064 [US1] Create `src/game/scenes/BattleScene.{h,cpp}`:
+- [X] T064 [US1] Create `src/game/scenes/BattleScene.{h,cpp}`:
   - The own `BoardNode` sits on the left and the target `BoardNode` (a `viewOf(Computer)`
     projection only) on the right.
   - A turn banner shows `battle.turn.player` or `battle.turn.computer` (FR-024), and name
@@ -566,7 +567,7 @@ sunk ships, and the winner screen (spec US1, quickstart §5 step 1).
     are applied in the same frame.
   - On `GameOver`, it shows `GameOverLayer`, and it calls `enterScreen(Battle)`.
   - Implement `SceneNavigator::showBattle`.
-- [ ] T065 [US1] Create `src/game/scenes/GameOverLayer.{h,cpp}`. It is a modal overlay
+- [X] T065 [US1] Create `src/game/scenes/GameOverLayer.{h,cpp}`. It is a modal overlay
   (swallowing touches) over the final battle state. It shows `battle.winner` with `{name}` set
   to the winner's display name (FR-045), and the buttons `gameover.new_game` (→
   `showPlacement(Easy)`; US3 changes this) and `gameover.menu` (FR-046), with no confirmation.
@@ -589,20 +590,20 @@ ships, and try illegal positions. The battle starts only with a complete legal f
 
 ### Tests for User Story 2 (write first, confirm they FAIL)
 
-- [ ] T067 [P] [US2] Extend `tests/core/AutoPlacerTest.cpp` with `placeRemaining`:
+- [X] T067 [P] [US2] Extend `tests/core/AutoPlacerTest.cpp` with `placeRemaining`:
   - With 0–9 hand-placed ships it returns `Ok`, a complete legal fleet, and every hand-placed
     ship at its **exact** original placement (FR-009).
   - For a hand-built layout that leaves no room for the missing ships (construct it and prove
     it with an exhaustive check in the test), it returns `CannotFit` with `fleet` equal to the
     input (FR-012).
   - A complete input returns `Ok` unchanged.
-- [ ] T068 [P] [US2] Extend `tests/core/AutoPlacerBulkTest.cpp` with mixed placement over
+- [X] T068 [P] [US2] Extend `tests/core/AutoPlacerBulkTest.cpp` with mixed placement over
   10,000 seeds. For each, take a `placeAll` fleet, remove a random subset, run
   `placeRemaining`, and assert `Ok`, a legal and complete fleet, and the kept ships unchanged
   (SC-002, mixed part).
-- [ ] T069 [P] [US2] Extend `tests/core/GameSessionTurnTest.cpp`: after `startBattle()`,
+- [X] T069 [P] [US2] Extend `tests/core/GameSessionTurnTest.cpp`: after `startBattle()`,
   `playerFleet()` throws `std::logic_error` (FR-015, US2 scenario 9).
-- [ ] T070 [P] [US2] Extend `tests/app/PlacementControllerTest.cpp` with drag and drop:
+- [X] T070 [P] [US2] Extend `tests/app/PlacementControllerTest.cpp` with drag and drop:
   - `beginDragFromDock(id)` then `hover(c)` returns a `Preview` with the ship's cells, a
     `legal` flag and a `PlacementError` reason (OutOfBounds, Overlaps or Touches, including
     diagonals).
@@ -620,31 +621,31 @@ ships, and try illegal positions. The battle starts only with a complete legal f
 
 ### Implementation for User Story 2
 
-- [ ] T071 [US2] Implement `BacktrackingPlacer::placeRemaining` in
+- [X] T071 [US2] Implement `BacktrackingPlacer::placeRemaining` in
   `src/core/src/BacktrackingPlacer.cpp`. It seeds the search with the partial fleet's ships
   fixed and searches only the missing ShipIds, largest first. Exhausting the search or the
   budget returns `CannotFit` with the input fleet. This makes T067 and T068 pass.
-- [ ] T072 [US2] Confirm `GameSession::playerFleet()` throws `std::logic_error` outside
+- [X] T072 [US2] Confirm `GameSession::playerFleet()` throws `std::logic_error` outside
   `Placement` in `src/core/src/GameSession.cpp`, adjusting it if T055 did not do this. This
   makes T069 pass.
-- [ ] T073 [US2] Extend `src/app/include/bs/app/PlacementController.h` and
+- [X] T073 [US2] Extend `src/app/include/bs/app/PlacementController.h` and
   `src/app/src/PlacementController.cpp` with `Preview`, `DropResult`, `AutoResult`,
   `beginDragFromDock`, `beginDragPlaced`, `hover`, `rotate`, `drop`, `dropOnDock`,
   `cancelDrag`, `select(ShipId)` and `autoPlaceRemaining`, as in app-api.md. This makes T070
   pass.
-- [ ] T074 [US2] Add the US2 strings to `TextKeys.h` and all three `.lang` files:
+- [X] T074 [US2] Add the US2 strings to `TextKeys.h` and all three `.lang` files:
   - `placement.auto_remaining`, `placement.rotate`, `placement.dock`
   - `placement.dock.count` (`×{n}` in all three languages; it's a key so a translator can
     change the format later)
   - `placement.error.out_of_bounds`, `placement.error.overlaps`, `placement.error.touches`,
     `placement.error.cannot_fit`
   - `placement.hint` (drag, right-click to rotate)
-- [ ] T075 [P] [US2] Create `src/game/nodes/DockNode.{h,cpp}` and
+- [X] T075 [P] [US2] Create `src/game/nodes/DockNode.{h,cpp}` and
   `src/game/nodes/ShipNode.{h,cpp}`. The dock shows the unplaced ships grouped by length, each
   group with a count from `ILocalizer::format(placement.dock.count, {{"n", …}})` shown in a
   `LocalizedLabel`. `ShipNode` is a draggable ship visual in either orientation. Neither makes
   decisions; both report mouse events to the scene.
-- [ ] T076 [US2] Extend `src/game/scenes/PlacementScene.{h,cpp}` to full placement:
+- [X] T076 [US2] Extend `src/game/scenes/PlacementScene.{h,cpp}` to full placement:
   - **Mouse**: `EventListenerMouse` maps left-button down on a dock or placed ship to
     `beginDrag…`, move to `hover` (a green or red preview, plus a tooltip from the
     `placement.error.*` key on illegal), up to `drop` or `dropOnDock`, and right-click to
@@ -672,7 +673,7 @@ button shows "used" (spec US4, quickstart §5 step 4).
 
 ### Tests for User Story 4 (write first, confirm they FAIL)
 
-- [ ] T078 [P] [US4] Write `tests/core/HelpTest.cpp` (parameterized where useful):
+- [X] T078 [P] [US4] Write `tests/core/HelpTest.cpp` (parameterized where useful):
   - In the centre, 5 cells are affected, in the order centre, up, down, left, right.
   - At an edge 4 are affected, and in a corner 3 (FR-027, FR-028).
   - Cells already Miss, Hit or Marked are skipped and their state is unchanged.
@@ -687,7 +688,7 @@ button shows "used" (spec US4, quickstart §5 step 4).
   - A help that destroys the last ship cells ends the game with the user as winner, and no
     turn pass happens (FR-031).
   - `helpAvailable(side)` becomes false after a use.
-- [ ] T079 [P] [US4] Extend `tests/app/BattleControllerTest.cpp` with Help:
+- [X] T079 [P] [US4] Extend `tests/app/BattleControllerTest.cpp` with Help:
   - `armHelp()` enters `PlayerHelpTargeting` only from `AwaitingPlayer` and only if the help
     is available. `disarmHelp()` returns to `AwaitingPlayer`.
   - `onPlayerHelp(c)` applies and moves to `ComputerActing`, or to `GameOver` if it wins.
@@ -698,21 +699,21 @@ button shows "used" (spec US4, quickstart §5 step 4).
 
 ### Implementation for User Story 4
 
-- [ ] T080 [US4] Add `HelpOutcome` to `src/core/include/bs/core/GameSession.h` and implement
+- [X] T080 [US4] Add `HelpOutcome` to `src/core/include/bs/core/GameSession.h` and implement
   `GameSession::useHelp` and real `helpAvailable` in `src/core/src/GameSession.cpp`, using
   `Board::shoot(c, /*deferMarking*/ true)` and then `markAround` for each ship sunk by the
   cross. This makes T078 pass.
-- [ ] T081 [US4] Extend `src/app/src/BattleController.cpp` and
+- [X] T081 [US4] Extend `src/app/src/BattleController.cpp` and
   `src/app/include/bs/app/BattleController.h` with `armHelp`, `disarmHelp`, `onPlayerHelp`
   and `playerHelpAvailable`. This makes T079 pass.
-- [ ] T082 [US4] Add the US4 strings to `TextKeys.h` and all three `.lang` files:
+- [X] T082 [US4] Add the US4 strings to `TextKeys.h` and all three `.lang` files:
   `battle.help`, `battle.help.used`, `battle.help.hint` (click a target cell, right-click or
   Esc to cancel) and `battle.reject.help_no_effect`.
-- [ ] T083 [P] [US4] Create `src/game/nodes/HelpPreviewNode.{h,cpp}`. It is a cross overlay
+- [X] T083 [P] [US4] Create `src/game/nodes/HelpPreviewNode.{h,cpp}`. It is a cross overlay
   that follows the hovered target cell, is clipped at the board edges, and draws
   already-fired cells as "skipped" (hatched). It is pure drawing and gets its cells from the
   core `Coord` helpers.
-- [ ] T084 [US4] Extend `src/game/scenes/BattleScene.{h,cpp}`:
+- [X] T084 [US4] Extend `src/game/scenes/BattleScene.{h,cpp}`:
   - **Help button**: shows `battle.help` when available, and `battle.help.used` disabled when
     used (FR-032).
   - **Targeting**: clicking the button calls `armHelp()` and shows `HelpPreviewNode` with the
@@ -737,7 +738,7 @@ of a line once two hits are aligned, and Hard uses Help once within its first ~2
 
 ### Tests for User Story 3 (write first, confirm they FAIL)
 
-- [ ] T086 [P] [US3] Write `tests/core/HuntTargetStrategyTest.cpp`, covering FR-034 and
+- [X] T086 [P] [US3] Write `tests/core/HuntTargetStrategyTest.cpp`, covering FR-034 and
   research R8:
   - With no Hit cells it picks a random `Unknown` cell.
   - With one isolated Hit it picks only among that cell's `Unknown` orthogonal neighbours.
@@ -748,7 +749,7 @@ of a line once two hits are aligned, and Hard uses Help once within its first ~2
   - With several wounded clusters, it finishes the one whose first Hit it observed earliest
     (tracked from its own shot history across calls).
   - `Sunk` and `Marked` cells are never targeted.
-- [ ] T087 [P] [US3] Write `tests/core/HardStrategyTest.cpp`, covering FR-035:
+- [X] T087 [P] [US3] Write `tests/core/HardStrategyTest.cpp`, covering FR-035:
   - **Target turn**: drawn once at construction with `nextInt(1, 20)` (assert with
     `ScriptedRandom`).
   - **When Help is returned**: only when `firstActionOfTurn`, `turnIndex >= target`, no
@@ -759,15 +760,15 @@ of a line once two hits are aligned, and Hard uses Help once within its first ~2
     there are none, among the cells with the most `Unknown` cross cells.
   - **Delegation**: never Help when `helpAvailable == false`. All other actions match
     `HuntTargetStrategy` given the same random stream.
-- [ ] T088 [P] [US3] Extend `tests/core/StrategyContractTest.cpp` to also instantiate
+- [X] T088 [P] [US3] Extend `tests/core/StrategyContractTest.cpp` to also instantiate
   `HuntTargetStrategy` and `HardStrategy`. Every action must be a `Shot` at `Unknown`, or a
   `Help` with at least one `Unknown` cross cell and only when `helpAvailable`. Easy and Medium
   must never return Help (FR-036). Add a `makeStrategy` test that checks the dynamic type for
   each `Difficulty`.
-- [ ] T089 [P] [US3] Extend `tests/app/BattleControllerTest.cpp`: when the computer's
+- [X] T089 [P] [US3] Extend `tests/app/BattleControllerTest.cpp`: when the computer's
   strategy returns `Help`, `tick` applies `session.useHelp`, returns its changes, calls
   `IGameAudio::onHelp`, and passes the turn to the player (or `GameOver`).
-- [ ] T090 [P] [US3] Extend `tests/sim/AiSimulationTest.cpp`, using fixed seeds 1–N:
+- [X] T090 [P] [US3] Extend `tests/sim/AiSimulationTest.cpp`, using fixed seeds 1–N:
   - 1,000 games for each of Easy, Medium and Hard produce zero rejected actions and zero
     repeated cells (SC-005).
   - Over 100 Medium-vs-Easy games, Medium wins ≥ 60%.
@@ -778,22 +779,22 @@ of a line once two hits are aligned, and Hard uses Help once within its first ~2
 
 ### Implementation for User Story 3
 
-- [ ] T091 [US3] Create `src/core/src/HuntTargetStrategy.cpp` and declare it in
+- [X] T091 [US3] Create `src/core/src/HuntTargetStrategy.cpp` and declare it in
   `src/core/include/bs/core/Ai.h`. It does cluster detection over `Hit` cells, keeps the
   first-observed order of hits from its own history, and targets single-hit neighbours or
   line ends. This makes T086 pass.
-- [ ] T092 [US3] Create `src/core/src/HelpPlanner.cpp` and `src/core/src/HardStrategy.cpp`
+- [X] T092 [US3] Create `src/core/src/HelpPlanner.cpp` and `src/core/src/HardStrategy.cpp`
   and declare them in `Ai.h`. `HelpPlanner` holds the target turn drawn from `[1, 20]` and
   picks the centre. `HardStrategy` is a decorator over `HuntTargetStrategy` plus
   `HelpPlanner`. Then update `makeStrategy` in `src/core/src/StrategyFactory.cpp` for Medium
   and Hard. This makes T087 and T088 pass.
-- [ ] T093 [US3] Extend `src/app/src/BattleController.cpp` to execute `AiAction::Help` with
+- [X] T093 [US3] Extend `src/app/src/BattleController.cpp` to execute `AiAction::Help` with
   `firstActionOfTurn` and `turnIndex = session.turnsTaken(Computer)`. This makes T089 pass.
-- [ ] T094 [US3] Run `ctest -L sim` and confirm T090 passes. Record the observed win rates in
+- [X] T094 [US3] Run `ctest -L sim` and confirm T090 passes. Record the observed win rates in
   the commit message.
-- [ ] T095 [US3] Add the US3 strings to `TextKeys.h` and all three `.lang` files:
+- [X] T095 [US3] Add the US3 strings to `TextKeys.h` and all three `.lang` files:
   `difficulty.title`, `difficulty.easy`, `difficulty.medium` and `difficulty.hard`.
-- [ ] T096 [US3] Create `src/game/scenes/DifficultyOverlay.{h,cpp}`. It is a modal over
+- [X] T096 [US3] Create `src/game/scenes/DifficultyOverlay.{h,cpp}`. It is a modal over
   `MenuScene` with the buttons Easy, Medium, Hard and `common.back`, and choosing a level
   calls `showPlacement(difficulty)` (FR-001). Re-wire `MenuScene` New Game and the
   `GameOverLayer` `gameover.new_game` button to open this overlay (GameOver goes to the menu
@@ -815,27 +816,27 @@ check the settings are kept (spec US5, quickstart §5 step 5).
 
 ### Tests for User Story 5 (write first, confirm they FAIL)
 
-- [ ] T098 [P] [US5] Write `tests/app/SettingsControllerTest.cpp`, using a real
+- [X] T098 [P] [US5] Write `tests/app/SettingsControllerTest.cpp`, using a real
   `SettingsService` over `InMemorySettingsStore`, plus `FakeLocalizer` and `MockGameAudio`:
   - `toggleSound()` and `toggleMusic()` flip the setting, persist it, and call
     `IGameAudio::onSettingsChanged()`.
   - `selectLanguage(Ru)` stores `Ru` in the settings and calls
     `ILocalizer::setLanguage(Ru)`.
   - `filterNameInput(text)` caps live input at 20 code points.
-  - `commitName("  ")` stores `""`, and the display becomes `name.playerDefault`.
+  - `commitName("  ")` stores `""`, and the display becomes `name.player_default`.
   - `commitName` of 25 Cyrillic characters stores the first 20.
   - `languages()` returns En, Ru, Vi with the display keys `lang.en`, `lang.ru`, `lang.vi`.
 
 ### Implementation for User Story 5
 
-- [ ] T099 [US5] Create `src/app/include/bs/app/SettingsController.h` and
+- [X] T099 [US5] Create `src/app/include/bs/app/SettingsController.h` and
   `src/app/src/SettingsController.cpp`, with the constructor `(ISettings&, ILocalizer&,
   IGameAudio&)` and the operations from T098, as in app-api.md. This makes T098 pass.
-- [ ] T100 [US5] Add the US5 strings to `TextKeys.h` and all three `.lang` files:
+- [X] T100 [US5] Add the US5 strings to `TextKeys.h` and all three `.lang` files:
   `settings.title`, `settings.sound`, `settings.music`, `settings.language`,
   `settings.player_name`, `settings.on`, `settings.off` and
   `settings.name_placeholder`.
-- [ ] T101 [US5] Create `src/game/scenes/SettingsScene.{h,cpp}`:
+- [X] T101 [US5] Create `src/game/scenes/SettingsScene.{h,cpp}`:
   - Toggles for sound and music.
   - A language selector of three buttons labelled `lang.en`, `lang.ru` and `lang.vi`, with the
     current one highlighted.
@@ -845,7 +846,7 @@ check the settings are kept (spec US5, quickstart §5 step 5).
   - Every label is a `LocalizedLabel`, so the whole screen re-renders immediately on a
     language change (FR-040).
   - Implement `SceneNavigator::showSettings` and enable the `MenuScene` Settings button.
-- [ ] T102 [US5] In `src/game/AppDelegate.cpp`, at startup apply the persisted language to
+- [X] T102 [US5] In `src/game/AppDelegate.cpp`, at startup apply the persisted language to
   `Localizer` and start the menu music only if `musicEnabled`. Confirm persistence across an
   app restart (FR-043).
 - [ ] T103 [US5] Run quickstart §5 step 5 on macOS, including a 20-character name of wide
@@ -867,7 +868,7 @@ quickstart §5 step 6).
 
 ### Tests for User Story 6 (write first, confirm they FAIL)
 
-- [ ] T104 [P] [US6] Extend `tests/app/BattleControllerTest.cpp` with exit:
+- [X] T104 [P] [US6] Extend `tests/app/BattleControllerTest.cpp` with exit:
   - `requestExit()` from `AwaitingPlayer`, `PlayerHelpTargeting` or `ComputerActing` enters
     `ConfirmExit`.
   - While in `ConfirmExit`, `tick(10.0)` performs no computer action and returns no changes,
@@ -880,16 +881,16 @@ quickstart §5 step 6).
 
 ### Implementation for User Story 6
 
-- [ ] T105 [US6] Extend `src/app/include/bs/app/BattleController.h` and
+- [X] T105 [US6] Extend `src/app/include/bs/app/BattleController.h` and
   `src/app/src/BattleController.cpp` with `requestExit`, `cancelExit` and `confirmExit`,
   saving the previous mode and the accumulated delay. This makes T104 pass.
-- [ ] T106 [US6] Add the US6 strings to `TextKeys.h` and all three `.lang` files:
+- [X] T106 [US6] Add the US6 strings to `TextKeys.h` and all three `.lang` files:
   `exit.title` (Leave battle?), `exit.message` (the current game will be lost), `exit.stay`,
   `exit.leave` and `battle.menu`.
-- [ ] T107 [US6] Create `src/game/scenes/ConfirmDialog.{h,cpp}`. It is a reusable modal
+- [X] T107 [US6] Create `src/game/scenes/ConfirmDialog.{h,cpp}`. It is a reusable modal
   (a dimmed background that swallows touches) taking title and message TextKeys and two
   button TextKeys plus callbacks.
-- [ ] T108 [US6] Extend `src/game/scenes/BattleScene.{h,cpp}`:
+- [X] T108 [US6] Extend `src/game/scenes/BattleScene.{h,cpp}`:
   - The `battle.menu` button and Esc (when not in Help targeting) call `requestExit()` and
     show `ConfirmDialog`.
   - Stay calls `cancelExit()`. Leave calls `confirmExit()`, then `showMenu()`, and discards
@@ -913,18 +914,18 @@ constitution and the success criteria.
 - [ ] T111 [P] Do a layout pass on every scene in `src/game/scenes/` in all three languages.
   Find the longest string per key (usually ru or vi), confirm no `LocalizedLabel` clips at
   1280 × 720 or in a resized window, and adjust the max widths and layouts.
-- [ ] T112 [P] Write a Principle III code audit as `tests/core/FairnessCompileTest.cpp`, a
+- [X] T112 [P] Write a Principle III code audit as `tests/core/FairnessCompileTest.cpp`, a
   test that documents and asserts (through `static_assert` on the signatures) that
   `ITargetingStrategy::choose` takes only `const ITargetView&` and has no `Board`/`Fleet`
   parameter.
 - [ ] T113 [P] Run the full suite with `ctest --output-on-failure` (unit, `sim` and
   architecture) on macOS and Windows. Confirm zero warnings in a clean build on both.
-- [ ] T114 [P] Add `README.md` at the repo root: a one-paragraph description, links to
+- [X] T114 [P] Add `README.md` at the repo root: a one-paragraph description, links to
   `specs/001-battleship-game/quickstart.md` for the build/test/run commands, the layer
   overview (core → app → game), and licence notes for Noto Sans and the audio assets.
 - [ ] T115 Run the whole of quickstart.md §4 and §5 on macOS and on Windows. Tick each
   SC-001–SC-009 check, and file any failure as a test-first fix.
-- [ ] T116 Do a constitution compliance review of the full diff:
+- [X] T116 Do a constitution compliance review of the full diff:
   - Principles I–VI: no engine in core/app, tests written first, fair AI, no literal display
     strings in `src/game` (grep for quoted non-key literals passed to labels), offline only,
     SOLID rules.

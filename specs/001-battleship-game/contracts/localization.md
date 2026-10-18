@@ -28,7 +28,7 @@ value   := any UTF-8 text; "\n" inside the value is a newline; "{" ident "}" is 
 | Key | en | ru | vi |
 |---|---|---|---|
 | `name.computer` | Computer | Компьютер | Máy tính |
-| `name.playerDefault` | Player | Игрок | Người chơi |
+| `name.player_default` | Player | Игрок | Người chơi |
 | `battle.winner` | {name} wins! | {name} побеждает! | {name} chiến thắng! |
 
 The full catalogue covers:
@@ -48,6 +48,6 @@ merge rule).
 | `settings.sound` | bool | true |
 | `settings.music` | bool | true |
 | `settings.language` | string `en`/`ru`/`vi` | `en` |
-| `settings.playerName` | string (UTF-8, ≤ 20 code points, trimmed) | `""`, which displays `name.playerDefault` |
+| `settings.playerName` | string (UTF-8, ≤ 20 code points, trimmed) | `""`, which displays `name.player_default` |
 
 Unknown or corrupt values fall back to the defaults without crashing.

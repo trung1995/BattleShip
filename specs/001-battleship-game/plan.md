@@ -128,7 +128,7 @@ src/
 Resources/
 ├── i18n/                          # en.lang ru.lang vi.lang
 ├── fonts/                         # NotoSans-Regular.ttf NotoSans-Bold.ttf (+ OFL.txt)
-└── audio/                         # *.ogg effects and music (boards and ships are drawn with DrawNode)
+└── audio/                         # *.mp3 effects and music (boards and ships are drawn with DrawNode)
 tests/
 ├── core/                          # CoordTest Mt19937RandomTest FleetTest BoardTest AutoPlacerTest AutoPlacerBulkTest
 │                                  # GameSessionTurnTest HelpTest TargetViewTest FairnessCompileTest

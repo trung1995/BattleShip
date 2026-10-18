@@ -48,6 +48,7 @@ public:
     virtual void showSettings() = 0;
     virtual void showPlacement(bs::core::Difficulty) = 0;
     virtual void showBattle() = 0;
+    virtual void showNewGame() = 0;   // the menu with the difficulty picker open (Game Over → New Game)
 };
 ```
 
@@ -124,7 +125,7 @@ void setLanguage(Language);                                     // reloads table
 std::string text(TextKey) const;                                // falls back to the key name if missing (never crash)
 std::string format(TextKey, const std::map<std::string, std::string>& args) const;   // {name}
 SubscriptionId subscribe(std::function<void()> onChanged);  void unsubscribe(SubscriptionId);
-std::string displayName(bs::core::Side, const ISettings&) const;  // player name or name.playerDefault; name.computer
+std::string displayName(bs::core::Side, const ISettings&) const;  // player name or name.player_default; name.computer
 ```
 
 - A language change is applied synchronously, and every subscriber is notified before

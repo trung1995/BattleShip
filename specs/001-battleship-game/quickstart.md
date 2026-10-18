@@ -11,7 +11,7 @@ This guide proves the feature works end to end. Interfaces are defined in
 |---|---|---|
 | CMake | ≥ 3.16 | ≥ 3.16 |
 | Compiler | Xcode 14+ (AppleClang) | Visual Studio 2019 or 2022 with "Desktop development with C++" |
-| Python | 3.x (only for `download-deps.py`) | 3.x |
+| Python | 2.7 for `download-deps.py`, or unpack the deps archive by hand (§2) | same |
 | Git | with submodules | with submodules |
 
 The core and tests need only CMake and a C++14 compiler. No engine is required.
@@ -31,15 +31,28 @@ This configuration must never fetch or need cocos2d-x (Principle I).
 ## 2. Engine setup (once)
 
 ```bash
-git submodule update --init --recursive third_party/cocos2d-x    # pinned to cocos2d-x-4.0
-python3 third_party/cocos2d-x/download-deps.py --remove-download yes
+git submodule update --init third_party/cocos2d-x       # pinned to cocos2d-x-4.0
 ```
+
+Third-party libraries: `download-deps.py` requires Python 2.7. Without it, download the archive
+named in `third_party/cocos2d-x/external/config.json` (`cocos2d-x-3rd-party-libs-bin`, version
+`metal-support-22`) and unpack it into `third_party/cocos2d-x/external/`, moving its `fbx-conv`
+folder to `third_party/cocos2d-x/tools/`.
+
+On Apple Silicon, install Rosetta 2 once (the engine's libraries are x86_64 only):
+
+```bash
+softwareupdate --install-rosetta --agree-to-license
+```
+
+Engine fixes needed by current toolchains live in `third_party/patches/` and are applied to the
+submodule automatically when CMake configures the game.
 
 ## 3. Build and run the game
 
 **macOS** (x86_64; it runs under Rosetta 2 on Apple Silicon):
 ```bash
-cmake -S . -B build/mac -GXcode -DCMAKE_OSX_ARCHITECTURES=x86_64
+cmake -S . -B build/mac -G Xcode -DCMAKE_POLICY_VERSION_MINIMUM=3.5   # x86_64 is the default
 cmake --build build/mac --config Debug
 open build/mac/bin/BattleShip/Debug/BattleShip.app
 ```

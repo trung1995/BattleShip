@@ -190,7 +190,7 @@ Placement ───────────────────────�
 | playerName | UTF-8 string | "Player"¹ | trimmed; empty → default; at most 20 code points | `settings.playerName` |
 
 ¹ The *stored* value is empty until the player sets a name, and the default name is shown
-through the localized key `name.playerDefault`: "Player" / "Игрок" / "Người chơi" (FR-041).
+through the localized key `name.player_default`: "Player" / "Игрок" / "Người chơi" (FR-041).
 Because the default is resolved at display time, it follows a language change immediately.
 
 Settings persist on every change (FR-043) and are read once at startup.

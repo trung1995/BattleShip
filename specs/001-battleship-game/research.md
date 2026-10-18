@@ -205,7 +205,8 @@ decision for a mandated technology (constitution, Technology Stack).
   `stopMusic()`). The production adapter uses `cocos2d::experimental::AudioEngine`.
   `AudioService` in `battleship_app` maps game events to sound IDs and applies the
   sound-effects and music toggles independently, and its behaviour is unit-tested with a mock
-  player. Assets are OGG on both platforms.
+  player. Assets are **MP3**: the only format both engine backends decode (the macOS
+  backend uses ExtAudioFile, which cannot read Ogg Vorbis; the Windows backend reads Ogg and MP3).
 - **Rationale**: the toggle logic is testable without the engine (US5 scenario 2), and
   `AudioEngine` is the 4.0 audio API on desktop.
 

@@ -1,0 +1,387 @@
+<title>Battleship Redesign Brief</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column like a briefing dossier, with wide figures (screen maps) breaking out to full width. */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --fg: #14212e;
+  --muted: #566778;
+  --line: #d5dde5;
+  --accent: #1f5f8f;
+  --accent-soft: #e2edf6;
+  --warn: #a8641a;
+  --map-bg: #0c1e34;
+  --map-board: #1a3d5e;
+  --map-btn: #295c8f;
+  --map-text: #ebf2fa;
+  --map-note: #ffc85a;
+  --display: "Saira Condensed", "Arial Narrow", sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1722; --surface: #142231; --fg: #e3ebf3; --muted: #93a6b9; --line: #263a4e;
+    --accent: #7db6e3; --accent-soft: #18324a; --warn: #f0b060; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1722; --surface: #142231; --fg: #e3ebf3; --muted: #93a6b9; --line: #263a4e;
+  --accent: #7db6e3; --accent-soft: #18324a; --warn: #f0b060; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 48px 80px;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; text-wrap: balance; margin: 0; letter-spacing: 0.01em; }
+h1 { font-size: clamp(2.6rem, 6vw, 4rem); text-transform: uppercase; }
+h2 { font-size: 2rem; text-transform: uppercase; }
+h3 { font-size: 1.35rem; }
+p { margin: 0; }
+section { display: flex; flex-direction: column; gap: 18px; }
+.eyebrow { font: 500 0.75rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+header { display: flex; flex-direction: column; gap: 16px; border-bottom: 2px solid var(--fg); padding-bottom: 28px; }
+.lede { font-size: 1.15rem; color: var(--muted); max-width: 62ch; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.facts div { background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.facts dt { font: 500 0.7rem/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; }
+ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.cols > div { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.tag { display: inline-block; font: 500 0.72rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 8px; border: 1px solid currentColor; }
+.tag.fixed { color: var(--warn); }
+.tag.open { color: var(--accent); }
+.table-scroll { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+th { font: 500 0.72rem/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--accent-soft); }
+tr:last-child td { border-bottom: 0; }
+td code, p code, li code { font: 0.85em var(--mono); background: var(--accent-soft); padding: 1px 5px; }
+.screen { display: flex; flex-direction: column; gap: 14px; padding-top: 22px; border-top: 1px solid var(--line); }
+.map { width: 100%; max-width: 100%; height: auto; display: block; border: 1px solid var(--line); background: var(--map-bg); }
+.map .board { fill: var(--map-board); }
+.map .grid { stroke: #3d6488; stroke-width: 1; }
+.map .btn { fill: var(--map-btn); }
+.map .zone { fill: none; stroke: var(--map-note); stroke-dasharray: 6 5; stroke-width: 1.5; }
+.map text { font-family: var(--body); fill: var(--map-text); font-size: 18px; }
+.map .note { fill: var(--map-note); font-family: var(--mono); font-size: 14px; }
+.map .small { font-size: 15px; fill: #96aabe; }
+.cap { font-size: 0.85rem; color: var(--muted); }
+.cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.cell { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); padding: 12px; min-width: 0; }
+.cell svg { flex: none; width: 44px; height: 44px; }
+.cell b { display: block; }
+.cell span { font-size: 0.85rem; color: var(--muted); }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.sw { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; min-width: 0; }
+.sw i { flex: none; width: 34px; height: 34px; border: 1px solid var(--line); }
+.sw small { display: block; font: 0.75rem var(--mono); color: var(--muted); }
+.strings td:nth-child(n+2) { font-size: 0.88rem; }
+.callout { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 14px 18px; max-width: 68ch; }
+footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 18px; }
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Design brief · Battleship · desktop game</span>
+  <h1>Battleship redesign brief</h1>
+  <p class="lede">A single-player Battleship game against the computer. All the game logic works and is tested. The visuals are developer placeholders: flat shapes in code, one font and no artwork. We want a complete visual identity and an asset set we can drop into the engine.</p>
+  <dl class="facts">
+    <div><dt>Platform</dt><dd>Windows &amp; macOS desktop</dd></div>
+    <div><dt>Input</dt><dd>Mouse (keyboard shortcuts optional)</dd></div>
+    <div><dt>Canvas</dt><dd>1280 × 720, landscape</dd></div>
+    <div><dt>Languages</dt><dd>English, Russian, Vietnamese</dd></div>
+    <div><dt>Engine</dt><dd>cocos2d-x 4.0 (2D sprites)</dd></div>
+    <div><dt>Screens</dt><dd>5 screens + 3 overlays</dd></div>
+  </dl>
+</header>
+
+<section>
+  <span class="eyebrow">The game</span>
+  <h2>What the player does</h2>
+  <div class="prose" style="display:flex;flex-direction:column;gap:14px">
+    <p>The player and the computer each hide a fleet of 10 ships on a 10 × 10 grid: one 4-cell ship, two 3-cell, three 2-cell and four 1-cell ships. Ships run horizontally or vertically and may not touch, not even at the corners.</p>
+    <p>They take turns firing at cells on each other's grid. A hit earns another shot and a miss passes the turn. When every cell of a ship has been hit the ship is <em>sunk</em>, and the cells around it are marked automatically as "no ship here". The first side to sink the whole enemy fleet wins.</p>
+    <p>Each side also has one <strong>Help</strong> per game: a cross-shaped strike that fires at a centre cell and the cells directly above, below, left and right of it (up to 5 cells), then ends the turn.</p>
+    <p>A session is short (5–15 minutes), and the computer has three difficulty levels: Easy, Medium and Hard.</p>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Scope</span>
+  <h2>What is fixed and what is yours</h2>
+  <div class="cols">
+    <div>
+      <span class="tag fixed">Fixed</span>
+      <ul>
+        <li>10 × 10 grid, with both axes labelled with the numerals 1–10 (no letters, so they read the same in every language).</li>
+        <li>The fleet composition and the game rules.</li>
+        <li>Design canvas of 1280 × 720. Other window shapes are letterboxed, so keep everything important inside this frame.</li>
+        <li>Mouse-driven: drag and drop to place ships, right-click to rotate, left-click to fire.</li>
+        <li><strong>No text inside images.</strong> All text comes from translation files and is drawn live by the engine, so a language switch updates it instantly.</li>
+        <li>Every element listed in the screen section below must stay on its screen.</li>
+      </ul>
+    </div>
+    <div>
+      <span class="tag open">Open to you</span>
+      <ul>
+        <li>The whole art direction: mood, era, palette, materials (modern naval UI, vintage paper chart, toy-like, and so on).</li>
+        <li>Layout and positions on every screen, and the button order.</li>
+        <li>Board and cell size. Today a cell is 40 px; anything from about 34 to 48 px fits two boards side by side.</li>
+        <li>Ship artwork, the hit, miss and sunk effects, and the background art.</li>
+        <li>Fonts, as long as they cover Latin, Cyrillic and Vietnamese (see Typography).</li>
+        <li>Optional short animations (see Motion).</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Flow</span>
+  <h2>Screen flow</h2>
+<pre class="mermaid">
+flowchart LR
+  L([Launch]) --> M[Main menu]
+  M -->|New Game| D[Difficulty overlay]
+  M -->|Settings| S[Settings]
+  S -->|Back| M
+  D -->|Easy / Medium / Hard| P[Fleet placement]
+  D -->|Back| M
+  P -->|Start battle| B[Battle]
+  P -->|Back| M
+  B -->|Menu / Esc| X[Leave battle? dialog]
+  X -->|Stay| B
+  X -->|Leave| M
+  B -->|Fleet destroyed| G[Game over overlay]
+  G -->|New game| D
+  G -->|Main menu| M
+</pre>
+</section>
+
+<section>
+  <span class="eyebrow">Screens</span>
+  <h2>Screen by screen</h2>
+  <p class="prose">Each map shows the current placeholder layout at true 1280 × 720 proportions. It is an inventory of what must be on the screen, not a layout to keep. Dashed yellow outlines mark areas where text appears and changes length.</p>
+
+  <div class="screen">
+    <h3>1 · Main menu</h3>
+    <svg class="map" viewBox="0 0 1280 720" role="img" aria-label="Main menu layout">
+      <text x="640" y="190" text-anchor="middle" style="font-size:44px;font-weight:700">Battleship</text>
+      <rect class="btn" x="460" y="308" width="360" height="64"/><text x="640" y="347" text-anchor="middle">New Game</text>
+      <rect class="btn" x="460" y="392" width="360" height="64"/><text x="640" y="431" text-anchor="middle">Settings</text>
+      <rect class="btn" x="460" y="476" width="360" height="64"/><text x="640" y="515" text-anchor="middle">Quit</text>
+      <text class="note" x="40" y="690">Menu music plays here · title is live text, a logo mark may sit beside it</text>
+    </svg>
+    <ul class="prose">
+      <li>The game title, New Game, Settings and Quit.</li>
+      <li>This is the first impression and the best place for key art (a fleet, the sea, a chart table).</li>
+    </ul>
+  </div>
+
+  <div class="screen">
+    <h3>2 · Difficulty overlay (on top of the menu)</h3>
+    <ul class="prose">
+      <li>Heading "Choose difficulty", buttons Easy, Medium, Hard and Back.</li>
+      <li>Optional: one line under each level describing the opponent (we can add the text).</li>
+    </ul>
+  </div>
+
+  <div class="screen">
+    <h3>3 · Settings</h3>
+    <ul class="prose">
+      <li><strong>Sound effects</strong> on/off toggle and <strong>Music</strong> on/off toggle.</li>
+      <li><strong>Language</strong> selector with three options. Their names always appear in their own language: English, Русский, Tiếng Việt.</li>
+      <li><strong>Player name</strong> text field: up to 20 characters, any script, with a placeholder text and a focused state with a caret.</li>
+      <li>Back button.</li>
+    </ul>
+  </div>
+
+  <div class="screen">
+    <h3>4 · Fleet placement</h3>
+    <svg class="map" viewBox="0 0 1280 720" role="img" aria-label="Placement layout">
+      <text x="640" y="60" text-anchor="middle" style="font-size:32px;font-weight:700">Arrange your fleet</text>
+      <rect class="zone" x="250" y="82" width="780" height="30"/>
+      <text class="small" x="640" y="103" text-anchor="middle">Drag ships onto the board. Right-click or press R to rotate.</text>
+      <rect class="board" x="140" y="180" width="400" height="400"/>
+      <g class="grid">
+        <path d="M180 180V580M220 180V580M260 180V580M300 180V580M340 180V580M380 180V580M420 180V580M460 180V580M500 180V580M140 220H540M140 260H540M140 300H540M140 340H540M140 380H540M140 420H540M140 460H540M140 500H540M140 540H540"/>
+      </g>
+      <rect x="183" y="263" width="154" height="34" fill="#9aa3ad"/>
+      <rect x="423" y="383" width="34" height="114" fill="#9aa3ad"/>
+      <rect x="263" y="423" width="74" height="34" fill="rgba(77,204,102,.55)"/>
+      <text class="small" x="120" y="205" text-anchor="end">1</text><text class="small" x="160" y="170" text-anchor="middle">1</text>
+      <rect class="zone" x="140" y="604" width="400" height="30"/>
+      <text class="note" x="340" y="625" text-anchor="middle">rule-violation reason</text>
+      <text x="970" y="170" text-anchor="middle">Ships to place</text>
+      <rect class="zone" x="720" y="190" width="500" height="200"/>
+      <rect x="740" y="215" width="154" height="34" fill="#9aa3ad"/><text class="small" x="910" y="238">×1</text>
+      <rect x="740" y="265" width="114" height="34" fill="#9aa3ad"/><text class="small" x="870" y="288">×2</text>
+      <rect x="740" y="315" width="74" height="34" fill="#9aa3ad"/><text class="small" x="830" y="338">×3</text>
+      <rect x="1000" y="215" width="34" height="34" fill="#9aa3ad"/><text class="small" x="1046" y="238">×4</text>
+      <rect class="btn" x="650" y="433" width="220" height="54"/><text x="760" y="467" text-anchor="middle">Rotate</text>
+      <rect class="btn" x="890" y="433" width="220" height="54"/><text x="1000" y="467" text-anchor="middle" style="font-size:16px">Auto-place remaining</text>
+      <rect class="btn" x="650" y="503" width="220" height="54"/><text x="760" y="537" text-anchor="middle">Auto-place all</text>
+      <rect class="btn" x="890" y="503" width="220" height="54" opacity=".45"/><text x="1000" y="537" text-anchor="middle">Start battle</text>
+      <rect class="btn" x="1090" y="27" width="160" height="46"/><text x="1170" y="56" text-anchor="middle">Back</text>
+      <rect class="zone" x="340" y="655" width="600" height="34"/><text class="note" x="640" y="677" text-anchor="middle">toast message</text>
+    </svg>
+    <p class="cap">The green 2-cell ship shows a legal drop preview. Start battle stays disabled until all 10 ships are placed.</p>
+    <ul class="prose">
+      <li>The player's board, a <strong>dock</strong> of unplaced ships grouped by length with a remaining count (×4, ×3…), and a hint line.</li>
+      <li>Buttons: Rotate, Auto-place remaining, Auto-place all, Start battle (disabled and enabled states), Back.</li>
+      <li>While dragging, a <strong>ghost ship</strong> follows the cursor and the board shows a preview: <em>legal</em> (green today) or <em>illegal</em> (red today) with a written reason.</li>
+      <li>A placed ship can be selected (to rotate it) and dragged again. Dropping it on the dock removes it.</li>
+    </ul>
+  </div>
+
+  <div class="screen">
+    <h3>5 · Battle</h3>
+    <svg class="map" viewBox="0 0 1280 720" role="img" aria-label="Battle layout">
+      <rect class="zone" x="440" y="40" width="400" height="38"/>
+      <text x="640" y="67" text-anchor="middle" style="font-size:26px;font-weight:700">Your turn</text>
+      <text x="320" y="146" text-anchor="middle" style="font-weight:700">Trung</text>
+      <text class="small" x="320" y="174" text-anchor="middle">Your fleet</text>
+      <text x="960" y="146" text-anchor="middle" style="font-weight:700">Computer</text>
+      <text class="small" x="960" y="174" text-anchor="middle">Enemy waters</text>
+      <rect class="board" x="120" y="210" width="400" height="400"/>
+      <rect class="board" x="760" y="210" width="400" height="400"/>
+      <g class="grid">
+        <path d="M160 210V610M200 210V610M240 210V610M280 210V610M320 210V610M360 210V610M400 210V610M440 210V610M480 210V610M120 250H520M120 290H520M120 330H520M120 370H520M120 410H520M120 450H520M120 490H520M120 530H520M120 570H520"/>
+        <path d="M800 210V610M840 210V610M880 210V610M920 210V610M960 210V610M1000 210V610M1040 210V610M1080 210V610M1120 210V610M760 250H1160M760 290H1160M760 330H1160M760 370H1160M760 410H1160M760 450H1160M760 490H1160M760 530H1160M760 570H1160"/>
+      </g>
+      <rect x="163" y="253" width="114" height="34" fill="#9aa3ad"/>
+      <rect x="883" y="333" width="34" height="194" fill="rgba(255,217,77,.45)"/>
+      <rect x="803" y="413" width="274" height="34" fill="rgba(255,217,77,.45)"/>
+      <rect class="btn" x="520" y="394" width="240" height="52"/><text x="640" y="427" text-anchor="middle">Help</text>
+      <rect class="btn" x="1090" y="27" width="160" height="46"/><text x="1170" y="56" text-anchor="middle">Menu</text>
+      <rect class="zone" x="300" y="628" width="680" height="30"/><text class="note" x="640" y="649" text-anchor="middle">Help targeting hint</text>
+      <rect class="zone" x="340" y="664" width="600" height="34"/><text class="note" x="640" y="686" text-anchor="middle">toast message</text>
+    </svg>
+    <p class="cap">Left: the player's own fleet. Right: the enemy board with the yellow Help cross preview following the cursor.</p>
+    <ul class="prose">
+      <li><strong>Own board</strong> (left): the player's ships with the computer's shots on them. <strong>Target board</strong> (right): only what has been revealed; hidden enemy ships are never drawn.</li>
+      <li>Name and caption above each board, and a <strong>turn banner</strong>: "Your turn" or "Computer is firing…". The computer fires every 0.8 s, so the player should always see whose turn it is at a glance.</li>
+      <li><strong>Help</strong> button with three states: available, armed (targeting) and used. While armed, a cross preview follows the cursor over the target board, cut off at the board edges, with already-fired cells shown as skipped.</li>
+      <li><strong>Menu</strong> button, which opens the leave dialog.</li>
+      <li>Hover state for target cells and a "not allowed" cue for cells already fired at.</li>
+    </ul>
+  </div>
+
+  <div class="screen">
+    <h3>Overlays</h3>
+    <ul class="prose">
+      <li><strong>Leave battle?</strong> A modal panel with title, one line of text, and Stay / Leave buttons, over a dimmed battle. Leave is the destructive choice.</li>
+      <li><strong>Game over:</strong> "{name} wins!" with New game and Main menu buttons, over the final board state, which stays visible. It needs a victory variant and a defeat variant (the music and sounds already differ).</li>
+      <li><strong>Toast:</strong> a short message near the bottom, such as "Ships cannot overlap" or "You have already fired at this cell". It fades after a moment.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">The grid</span>
+  <h2>Cell states</h2>
+  <p class="prose">These are the core of the game's readability. Every state must be distinguishable at a glance, including by colour-blind players, so use shape as well as colour.</p>
+  <div class="cells">
+    <div class="cell"><svg viewBox="0 0 44 44"><rect width="44" height="44" fill="#1a3d5e"/></svg><div><b>Unknown</b><span>Untouched water</span></div></div>
+    <div class="cell"><svg viewBox="0 0 44 44"><rect width="44" height="44" fill="#1a3d5e"/><rect x="3" y="3" width="38" height="38" fill="#9aa3ad"/></svg><div><b>Ship</b><span>Own board only; a 1–4 cell piece, horizontal or vertical</span></div></div>
+    <div class="cell"><svg viewBox="0 0 44 44"><rect width="44" height="44" fill="#1a3d5e"/><circle cx="22" cy="22" r="5" fill="#ebf2ff"/></svg><div><b>Miss</b><span>Shot into empty water</span></div></div>
+    <div class="cell"><svg viewBox="0 0 44 44"><rect width="44" height="44" fill="#1a3d5e"/><rect x="2" y="2" width="40" height="40" fill="#db3d33"/><path d="M10 10L34 34M10 34L34 10" stroke="#fff" stroke-width="3"/></svg><div><b>Hit</b><span>Part of a ship that is still afloat</span></div></div>
+    <div class="cell"><svg viewBox="0 0 44 44"><rect width="44" height="44" fill="#781f1f"/><path d="M10 10L34 34M10 34L34 10" stroke="#e8b0b0" stroke-width="3"/></svg><div><b>Sunk</b><span>Every cell of that ship hit; should read as one wreck</span></div></div>
+    <div class="cell"><svg viewBox="0 0 44 44"><rect width="44" height="44" fill="#1a3d5e"/><circle cx="22" cy="22" r="2.6" fill="#738fad"/></svg><div><b>Marked</b><span>Auto-filled around a wreck; must look different from Miss</span></div></div>
+    <div class="cell"><svg viewBox="0 0 44 44"><rect width="44" height="44" fill="#1a3d5e"/><rect width="44" height="44" fill="rgba(77,204,102,.55)"/></svg><div><b>Preview: legal</b><span>Placement drag can drop here</span></div></div>
+    <div class="cell"><svg viewBox="0 0 44 44"><rect width="44" height="44" fill="#1a3d5e"/><rect width="44" height="44" fill="rgba(230,64,64,.55)"/></svg><div><b>Preview: illegal</b><span>Out of bounds, overlap or touching</span></div></div>
+    <div class="cell"><svg viewBox="0 0 44 44"><rect width="44" height="44" fill="#1a3d5e"/><rect width="44" height="44" fill="rgba(255,217,77,.45)"/><rect x=".75" y=".75" width="42.5" height="42.5" fill="none" stroke="#ffd94d" stroke-width="1.5"/></svg><div><b>Help preview</b><span>Cells the cross will hit; plus a "skipped" look for fired cells</span></div></div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Text</span>
+  <h2>Typography and text length</h2>
+  <div class="prose" style="display:flex;flex-direction:column;gap:14px">
+    <p>The font must cover <strong>Latin, Cyrillic and Vietnamese</strong>, including Vietnamese stacked diacritics such as ế, ữ, ặ. Those need extra line height so they don't clip. The font licence must allow embedding in a distributed game (OFL is ideal). We currently use Noto Sans Regular and Bold at three sizes: 44, 24 and 18 px.</p>
+    <p>Russian and Vietnamese run 30–60% longer than English. Size buttons and banners for the longest version below. Where text would wrap, design for two lines.</p>
+  </div>
+  <div class="table-scroll">
+    <table class="strings">
+      <thead><tr><th>Where</th><th>English</th><th>Russian</th><th>Vietnamese</th></tr></thead>
+      <tbody>
+        <tr><td>Button</td><td>Auto-place remaining</td><td>Расставить оставшиеся</td><td>Tự động xếp phần còn lại</td></tr>
+        <tr><td>Button</td><td>Start battle</td><td>Начать бой</td><td>Bắt đầu trận đánh</td></tr>
+        <tr><td>Turn banner</td><td>Computer is firing…</td><td>Компьютер стреляет…</td><td>Máy tính đang bắn…</td></tr>
+        <tr><td>Dialog title</td><td>Leave the battle?</td><td>Покинуть бой?</td><td>Rời khỏi trận đánh?</td></tr>
+        <tr><td>Hint line</td><td>Choose the centre of the cross. Right-click or Esc to cancel.</td><td>Выберите центр креста. Правая кнопка мыши или Esc — отмена.</td><td>Chọn tâm của hình chữ thập. Nhấp chuột phải hoặc Esc để hủy.</td></tr>
+        <tr><td>Error toast</td><td>The remaining ships cannot fit — move or remove some ships</td><td>Оставшиеся корабли не помещаются — передвиньте или уберите корабли</td><td>Không đủ chỗ cho các tàu còn lại — hãy di chuyển hoặc bỏ bớt tàu</td></tr>
+        <tr><td>Name label</td><td colspan="3">Up to 20 characters of any script (the player's own name)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Starting point</span>
+  <h2>Current placeholder palette</h2>
+  <p class="prose">For reference only. Replace it freely.</p>
+  <div class="swatches">
+    <div class="sw"><i style="background:#0c1e34"></i><div>Background<small>#0C1E34</small></div></div>
+    <div class="sw"><i style="background:#1a3d5e"></i><div>Water<small>#1A3D5E</small></div></div>
+    <div class="sw"><i style="background:#3d638c"></i><div>Grid lines<small>#3D638C</small></div></div>
+    <div class="sw"><i style="background:#99a3ad"></i><div>Ship<small>#99A3AD</small></div></div>
+    <div class="sw"><i style="background:#db3d33"></i><div>Hit<small>#DB3D33</small></div></div>
+    <div class="sw"><i style="background:#781f1f"></i><div>Sunk<small>#781F1F</small></div></div>
+    <div class="sw"><i style="background:#ebf2ff"></i><div>Miss<small>#EBF2FF</small></div></div>
+    <div class="sw"><i style="background:#738fad"></i><div>Marked<small>#738FAD</small></div></div>
+    <div class="sw"><i style="background:#295c8f"></i><div>Button<small>#295C8F</small></div></div>
+    <div class="sw"><i style="background:#ffc85a"></i><div>Warning text<small>#FFC85A</small></div></div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Motion</span>
+  <h2>Animation (optional, nice to have)</h2>
+  <ul class="prose">
+    <li>Shot impact: a splash for a miss and an explosion for a hit, each <strong>under 0.6 s</strong>, because the computer fires every 0.8 s.</li>
+    <li>Sinking: a slightly bigger moment, about 1 s at most.</li>
+    <li>Help strike: the cross lighting up across the board.</li>
+    <li>Button hover and press, a ship lifting while dragged, and a victory or defeat flourish.</li>
+    <li>Deliver as PNG sprite sheets or frame sequences with timing notes, or describe them (scale, fade, shake) and we build them in code.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">Handoff</span>
+  <h2>Deliverables</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Item</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>Mockups</td><td>All 5 screens and 3 overlays at 1280 × 720, in English plus at least the battle and placement screens in Russian and Vietnamese. Include hover, pressed, disabled and armed states.</td></tr>
+        <tr><td>Backgrounds</td><td>Menu and battle backgrounds (others may share), 1280 × 720 and 2560 × 1440.</td></tr>
+        <tr><td>Board</td><td>Water tile or full board, grid lines, and the axis label style.</td></tr>
+        <tr><td>Cell markers</td><td>Miss, hit, sunk, marked, hover, legal and illegal preview, Help cross and skipped cell, at the chosen cell size and 2×.</td></tr>
+        <tr><td>Ships</td><td>Lengths 1, 2, 3 and 4, horizontal (we rotate in code, or supply vertical versions if lighting matters), plus intact, hit and sunk variants if the ship art changes when damaged.</td></tr>
+        <tr><td>UI kit</td><td>Button (normal, hover, pressed, disabled), panel or dialog frame, toggle (on/off), text field (empty, focused), language selector and dim overlay. Buttons and panels as <strong>9-slice</strong> images with the stretch insets noted.</td></tr>
+        <tr><td>Logo</td><td>A game mark or emblem without lettering. The title text stays live so it can be translated.</td></tr>
+        <tr><td>Fonts</td><td>Font files plus licence (Latin, Cyrillic, Vietnamese).</td></tr>
+        <tr><td>App icon</td><td>1024 × 1024 master; we produce the .icns and .ico.</td></tr>
+        <tr><td>Source</td><td>Figma (preferred) or layered source files, plus a short spec of colours, type sizes and spacing.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <p><strong>File format:</strong> PNG-32 with alpha, sRGB, exported at 1× and 2× (Retina). Gradients, shadows and glows must be baked into the images, because the engine draws plain sprites. Please name files by element and state, for example <code>button_hover.png</code> or <code>cell_miss@2x.png</code>.</p>
+  </div>
+</section>
+
+<footer>Battleship · single-player desktop game. Audio (music and effects) is already in place and is outside this brief. Questions about rules or behaviour: ask the developer, and we can share a playable build.</footer>
+
+</div>

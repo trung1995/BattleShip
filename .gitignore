@@ -1,0 +1,29 @@
+# Build output
+build/
+out/
+bin/
+obj/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.dll
+*.log
+
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+xcuserdata/
+*.xcuserstate
+CMakeUserPresets.json
+*.swp
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env*
