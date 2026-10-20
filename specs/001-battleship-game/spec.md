@@ -15,9 +15,16 @@
 - Q: When a ship sinks, should the game automatically mark the empty cells around it as "no ship here"? → A: Yes, for both sides; marked cells count as already fired upon (cannot be shot, skipped by Help) and are not counted as misses.
 - Q: Should the computer's displayed name change with the language, or always be "Компьютер"? → A: Translated per language: "Computer" / "Компьютер" / "Máy tính", updating immediately on a language change.
 - Q: On Medium and Hard, after the computer hits the same ship twice in a row, should it keep firing only along that line? → A: Yes; after one hit it tries the four orthogonal neighbours, and once two or more hits line up it fires only at the untried cells at either end of that line until the ship sinks.
-- Q: How should Hard pick the turn and the target cell for its one Help? → A: At game start it picks a random turn from its 1st–20th turn (waiting for the next turn with no wounded ship if busy); the centre is a random cell whose whole on-board cross is untouched, otherwise a cell whose cross has the most untouched cells.
+- Q: How should Hard pick the turn and the target cell for its Help? → A: At game start it picks a random turn from its 1st–20th turn (waiting for the next turn with no wounded ship if busy); *superseded on 2026-10-20: now three distinct turns, one per Help use*; the centre is a random cell whose whole on-board cross is untouched, otherwise a cell whose cross has the most untouched cells.
 - Q: What devices does the game run on, and do players use a mouse or touch? → A: Desktop only (Windows and macOS) with a mouse: drag to place, right-click or a button to rotate, landscape window.
 - Q: Should the default player name be translated like the computer's name? → A: Yes: "Player" / "Игрок" / "Người chơi"; an empty name falls back to the default for the current language.
+
+### Session 2026-10-20
+
+- Q: How many times per game can Help be used? → A: Three times per game for the player, and three times per game for the computer on Hard (counted separately). This replaces the earlier once-per-game rule. Hard picks three distinct target turns from its 1st–20th turn; the centre rule is unchanged (see FR-035).
+- Q: Can Help be used as the extra shot right after a hit, or only as the first action of a turn? → A: In place of any shot the participant is entitled to, including an extra shot after a hit; it then ends the turn.
+- Q: Should the battle screen show how many Help uses the computer has left? → A: Yes on Hard: its remaining count (3/2/1/0) is shown next to its name; hidden on Easy and Medium.
+- Q: When Help is used, are the cross cells revealed all at once or one after another? → A: All at once, within 0.5 seconds, followed by any sunk-ship marking.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -77,28 +84,30 @@ Before starting a game the player chooses Easy, Medium or Hard. Each level makes
 2. **Given** Medium is selected and the computer has no wounded ship (hit but not yet sunk) to finish, **When** it takes a shot, **Then** it picks a random cell it has not fired upon.
 3. **Given** Medium is selected and the computer has hit a ship that is not yet sunk, **When** it takes its next shot, **Then** it targets an unshot cell directly next to the hit cell (above, below, left or right) if that ship has only one hit, or an unshot cell at either end of the line of hits if it has two or more.
 4. **Given** Medium is selected and the computer has just sunk the ship it was finishing off, **When** it takes its next shot, **Then** it returns to random targeting, unless another wounded ship is still being tracked.
-5. **Given** Hard is selected, **When** the computer plays, **Then** it uses the Medium targeting rules and uses its Help ability at most once, on the turn defined in FR-035, centred on a cell chosen as defined in FR-035.
+5. **Given** Hard is selected, **When** the computer plays, **Then** it uses the Medium targeting rules and uses its Help ability up to three times, on the turns defined in FR-035, each centred on a cell chosen as defined in FR-035.
 6. **Given** Easy or Medium is selected, **When** the game is played, **Then** the computer never uses the Help ability.
 
 ---
 
 ### User Story 4 - Use the "Help" Ability (Priority: P2)
 
-Once per game, on their turn, the player can use Help instead of a normal shot. They pick a target cell, and the ability hits that cell plus its neighbours above, below, left and right. This ends the player's turn even if something is hit.
+Up to three times per game, on their turn, the player can use Help instead of a normal shot. They pick a target cell, and the ability hits that cell plus its neighbours above, below, left and right. This ends the player's turn even if something is hit.
 
 **Why this priority**: Help is the game's distinctive extra mechanic. It adds strategy but isn't needed for a basic game.
 
-**Independent Test**: In a battle, use Help in the middle of the board, at an edge and in a corner, and near cells already fired upon. Check which cells are affected, that the ability can't be used again, and that the turn passes.
+**Independent Test**: In a battle, use Help in the middle of the board, at an edge and in a corner, and near cells already fired upon. Check which cells are affected, that the remaining-uses counter goes 3 → 2 → 1 → 0, that the ability can't be used a fourth time, and that the turn passes after each use.
 
 **Acceptance Scenarios**:
 
-1. **Given** it is the player's turn and Help has not been used, **When** the player uses Help on a cell, **Then** that cell and its four orthogonal neighbours are each resolved as a hit or a miss.
+1. **Given** it is the player's turn and the player has at least one Help use left, **When** the player uses Help on a cell, **Then** that cell and its four orthogonal neighbours are each resolved as a hit or a miss, and the player's remaining Help uses decrease by one.
 2. **Given** the chosen cell is at an edge or in a corner, **When** Help is used, **Then** neighbours outside the board are skipped and only cells on the board are affected.
 3. **Given** some cells in the cross have already been fired upon, **When** Help is used, **Then** those cells are skipped and their state does not change.
 4. **Given** Help hits one or more ship cells, **When** it resolves, **Then** the turn still passes to the opponent; no extra shot is given.
 5. **Given** Help destroys the opponent's last remaining ship cells, **When** it resolves, **Then** the game ends immediately and the user of the ability is declared the winner.
-6. **Given** the player has already used Help in this game, **When** they try to use it again, **Then** it is unavailable and is clearly shown as used.
-7. **Given** the computer has used its own Help (Hard), **When** the player checks their ability, **Then** the player's Help is still available; the two uses are separate.
+6. **Given** the player has used Help once or twice, **When** their next turn comes, **Then** Help is still available and the interface shows how many uses are left (2 or 1).
+7. **Given** the player has already used Help three times in this game, **When** they try to use it again, **Then** it is unavailable and is clearly shown as used up.
+8. **Given** the player's normal shot was a hit and they have Help uses left, **When** they use Help for their extra shot, **Then** the cross resolves, one use is consumed and the turn passes to the opponent.
+9. **Given** the computer has used some or all of its own Help uses (Hard), **When** the player checks their ability, **Then** the player's remaining uses are unchanged; the two counters are separate, and the computer's counter beside its name shows its own remaining uses.
 
 ---
 
@@ -143,7 +152,7 @@ If the player tries to go back to the menu during a battle, the game asks them t
 - The player clicks the opponent's board while it is the computer's turn: the input is ignored.
 - The player selects an already-fired cell as a normal shot: it is rejected and the turn does not change.
 - The player picks a Help centre whose five cells (or fewer, at the edge) have all been fired upon already: the selection is rejected, so the ability isn't wasted for no effect.
-- The game ends before Hard AI reaches its chosen Help turn (or before it has a turn with no wounded ship): the ability simply goes unused.
+- The game ends before Hard AI reaches one or more of its chosen Help turns (or before it has a free turn for a deferred use): the remaining uses simply go unused. The same applies to any Help uses the player has not spent.
 - Hard AI's Help hits several ships at once: each newly hit but not yet sunk ship is tracked for finishing off on later turns.
 - With mixed placement, the hand-placed ships leave too little room: the player is told, nothing moves, and the player can still edit the layout.
 - A ship is sunk by a Help shot rather than a normal shot: it is shown as sunk, and its surrounding cells are marked, exactly as after a normal shot.
@@ -197,19 +206,20 @@ If the player tries to go back to the menu during a battle, the game asks them t
 
 **Help ability**
 
-- **FR-026**: Each participant MUST have exactly one Help use per game, tracked separately for the player and the computer.
-- **FR-027**: Using Help MUST replace a normal shot on the user's turn and MUST affect the chosen cell plus its orthogonal neighbours (up, down, left, right), up to five cells.
+- **FR-026**: Each participant MUST have exactly three Help uses per game, tracked separately for the player and the computer. Unused uses do not carry over to the next game.
+- **FR-027**: Using Help MUST replace a normal shot on the user's turn — either the first shot or any extra shot earned by a hit — and MUST affect the chosen cell plus its orthogonal neighbours (up, down, left, right), up to five cells.
 - **FR-028**: Cells in the cross that are outside the board, or have already been fired upon, MUST be skipped.
 - **FR-029**: The chosen centre MUST be a cell on the board; the game MUST reject a centre where every affected cell has already been fired upon.
-- **FR-030**: Using Help MUST use up the ability and end the user's turn, even if it scores hits.
+- **FR-030**: Each use of Help MUST consume one of the user's remaining uses and end the user's turn, even if it scores hits; therefore Help can be used at most once per turn. When no uses remain, Help MUST be unavailable.
 - **FR-031**: If Help destroys the opponent's last remaining ship cell, the game MUST end immediately with its user as the winner.
-- **FR-032**: The interface MUST show whether the player's Help is still available.
+- **FR-048**: All cells affected by a Help use MUST be revealed together as one action, not one by one; any "no ship here" marking around ships it sinks MUST appear right after.
+- **FR-032**: The interface MUST show how many Help uses the player has left (3, 2, 1 or 0) and whether Help is currently available. On Hard, it MUST also show the computer's remaining Help uses (3, 2, 1 or 0) next to the computer's name; on Easy and Medium no computer Help counter is shown.
 
 **Computer opponent**
 
 - **FR-033**: On Easy, the computer MUST pick each shot at random from the cells it has not fired upon.
 - **FR-034**: On Medium, the computer MUST fire at random until it hits a ship. While a hit ship is not yet sunk, it MUST target it as follows: with one hit, a random unshot orthogonal neighbour of that cell; with two or more hits in a line, a random unshot cell at either end of that line, never a cell beside the line. After sinking it, the computer MUST return to random targeting, unless another hit-but-unsunk ship is still being tracked.
-- **FR-035**: On Hard, the computer MUST use the Medium strategy and MUST use Help once per game, as follows. A computer turn is counted each time the turn passes to the computer. At game start the computer MUST pick a target turn uniformly at random from its 1st to 20th turn. It MUST use Help as the first action of that turn, or, if it is then finishing a wounded ship, of its next turn with no wounded ship. The centre MUST be chosen at random among cells whose entire on-board cross is untouched; if there are none, at random among cells whose cross has the most untouched cells.
+- **FR-035**: On Hard, the computer MUST use the Medium strategy and MUST use Help three times per game, as follows. A computer turn is counted each time the turn passes to the computer. At game start the computer MUST pick three distinct target turns uniformly at random from its 1st to 20th turn. For each target turn, it MUST use Help as the first action of that turn, or, if it is then finishing a wounded ship, of its next turn with no wounded ship. Since Help ends the turn, at most one Help is used per turn: if a deferred use lands on a turn already taken by another use, it moves to the next free turn with no wounded ship. For each use, the centre MUST be chosen at random among cells whose entire on-board cross is untouched; if there are none, at random among cells whose cross has the most untouched cells.
 - **FR-036**: On Easy and Medium, the computer MUST NOT use Help.
 - **FR-037**: The computer MUST never fire at a cell it has already fired upon.
 
@@ -230,7 +240,7 @@ If the player tries to go back to the menu during a battle, the game asks them t
 
 ### Key Entities
 
-- **Participant**: One side of a game, either the human player or the computer. Has a display name, a board, a fleet, a Help-available flag, and for the computer a difficulty level.
+- **Participant**: One side of a game, either the human player or the computer. Has a display name, a board, a fleet, a count of remaining Help uses (starts at 3), and for the computer a difficulty level.
 - **Board**: A 10 × 10 grid of cells belonging to one participant. Each cell is empty or part of a ship, and is either untouched, a miss, a hit, or marked "no ship here" (automatically, next to a sunk ship). Miss, hit and marked cells all count as fired upon.
 - **Ship**: A straight run of 1–4 cells with an orientation. Its state is intact, damaged (some cells hit) or sunk (all cells hit).
 - **Fleet**: The set of 10 ships belonging to one participant, with a fixed composition (1×4, 2×3, 3×2, 4×1).
@@ -249,7 +259,7 @@ If the player tries to go back to the menu during a battle, the game asks them t
 - **SC-006**: Every interface text is translated in all three languages, with no untranslated or missing strings found in a full walkthrough of each language.
 - **SC-007**: No battle is lost to an accidental exit: 100% of attempts to leave an in-progress battle show a confirmation first.
 - **SC-008**: In playtesting, at least 90% of first-time players correctly predict which cells Help will affect after one use.
-- **SC-009**: Every shot result (player or computer) appears on screen within 0.5 seconds of the shot.
+- **SC-009**: Every shot result (player or computer) appears on screen within 0.5 seconds of the shot; for Help, all affected cells appear together within 0.5 seconds of its use.
 
 ## Assumptions
 
@@ -258,7 +268,7 @@ If the player tries to go back to the menu during a battle, the game asks them t
 - Abandoning a battle discards it; saving and resuming a battle in progress is out of scope.
 - Sound and music settings are simple on/off toggles; volume sliders are not required.
 - The default language is English on first launch.
-- Hard AI's random Help moment is chosen independently each game; whether or not it hits, Help results feed into the Medium-style "finish the wounded ship" tracking.
+- Hard AI's three random Help moments are chosen independently each game; whether or not it hits, Help results feed into the Medium-style "finish the wounded ship" tracking.
 - The Medium/Hard targeting rule considers only orthogonal neighbours (up/down/left/right) of hit cells, and only the line's ends once two hits are aligned, since ships are straight.
 - No statistics, leaderboards, achievements or game history are kept.
 - The computer's shots are animated or paced so the player can follow them, roughly 0.5–1.5 seconds per shot.

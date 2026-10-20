@@ -103,6 +103,14 @@ ActionFeedback BattleController::onPlayerHelp(bs::core::Coord centre) {
 
 bool BattleController::playerHelpAvailable() const { return session_.helpAvailable(Side::Player); }
 
+int BattleController::playerHelpUsesLeft() const { return session_.helpUsesLeft(Side::Player); }
+
+bool BattleController::showComputerHelpCounter() const {
+    return session_.difficulty() == bs::core::Difficulty::Hard;
+}
+
+int BattleController::computerHelpUsesLeft() const { return session_.helpUsesLeft(Side::Computer); }
+
 void BattleController::requestExit() {
     if (mode_ == Mode::GameOver || mode_ == Mode::ConfirmExit) {
         return; // game over leaves without confirmation (US6 scenario 4)
@@ -131,7 +139,7 @@ std::vector<bs::core::CellChange> BattleController::tick(double dtSeconds) {
 
     const bs::core::AiAction action = strategy_->choose(
         session_.viewOf(Side::Player), session_.turnsTaken(Side::Computer), computerFirstAction_,
-        session_.helpAvailable(Side::Computer), rng_);
+        session_.helpUsesLeft(Side::Computer), rng_);
     computerFirstAction_ = false;
 
     if (action.kind == bs::core::AiAction::Kind::Help) {

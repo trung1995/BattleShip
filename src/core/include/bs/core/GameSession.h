@@ -79,14 +79,17 @@ public:
     StartStatus startBattle();
 
     ShotOutcome fire(Side shooter, Coord target);
-    // The once-per-game cross: the centre plus up, down, left, right (FR-026..FR-031). Skips
-    // off-board and fired cells; a centre with nothing left to hit is rejected and not consumed.
+    // The cross: the centre plus up, down, left, right (FR-026..FR-031), kHelpUsesPerGame times
+    // per participant, in place of any shot of the user's turn, including an extra shot after a
+    // hit. Skips off-board and fired cells; a centre with nothing left to hit is rejected and
+    // consumes no use.
     HelpOutcome useHelp(Side user, Coord centre);
 
     Phase phase() const { return phase_; }
     Side currentTurn() const { return currentTurn_; }
     Side winner() const; // precondition: phase() == Finished
-    bool helpAvailable(Side side) const;
+    int helpUsesLeft(Side side) const; // 0..kHelpUsesPerGame (FR-032)
+    bool helpAvailable(Side side) const { return helpUsesLeft(side) > 0; }
     int turnsTaken(Side side) const; // times the turn has passed to `side` (FR-035)
     const ITargetView& viewOf(Side boardOwner) const;
     const Fleet& ownFleet(Side side) const;
@@ -106,7 +109,7 @@ private:
     std::array<std::unique_ptr<Board>, 2> boards_;
     std::array<std::unique_ptr<TargetView>, 2> views_;
     std::array<int, 2> turnsTaken_{};
-    std::array<bool, 2> helpUsed_{};
+    std::array<int, 2> helpUsesLeft_{{kHelpUsesPerGame, kHelpUsesPerGame}};
 };
 
 } // namespace core

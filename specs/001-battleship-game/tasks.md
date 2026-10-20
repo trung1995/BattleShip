@@ -20,6 +20,11 @@ game decisions.
 **Organization**: Tasks are grouped by user story. US4 (Help) comes before US3 (Difficulty).
 Both are P2, but the Hard AI uses the core Help rule.
 
+**Revision 2026-10-20**: the spec changed Help from one use to **three uses per side**
+(FR-026, FR-027, FR-030, FR-032, FR-035, FR-048). Phases 1–9 describe what was built for the
+original single-use rule and are kept as history. **Phase 10** holds the follow-up tasks that
+migrate the code; until it is done, phases 5 and 6 do not meet the current spec.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependency on an incomplete task)
@@ -667,6 +672,10 @@ fully automatic fleet.
 **Goal**: Each side has one cross-shaped Help per game. It replaces a shot, ends the turn,
 skips off-board and fired cells, and can win the game.
 
+> **Superseded in part (2026-10-20)**: Help now has three uses per side, may replace an extra
+> shot after a hit, and shows a remaining-uses counter. See Phase 10 (T117, T118, T121, T123,
+> T125–T127).
+
 **Independent Test**: Use Help in the centre, at an edge, in a corner and next to fired cells.
 Check the affected cells, that the turn passes, that a second use is impossible, and that the
 button shows "used" (spec US4, quickstart §5 step 4).
@@ -731,6 +740,9 @@ for the Hard AI.
 
 **Goal**: Easy, Medium and Hard computer opponents, chosen before each game. Medium finishes
 wounded ships along the line, and Hard adds one well-aimed Help.
+
+> **Superseded in part (2026-10-20)**: Hard now uses Help three times, on three distinct
+> target turns in 1–20. See Phase 10 (T119, T120, T122, T124, T128).
 
 **Independent Test**: Watch the computer's shots at each level. Medium fires only at the ends
 of a line once two hits are aligned, and Hard uses Help once within its first ~20 turns. The
@@ -934,6 +946,164 @@ constitution and the success criteria.
 
 ---
 
+## Phase 10: Help Revision — Three Uses per Side (2026-10-20)
+
+**Purpose**: migrate the single-use Help built in phases 5 and 6 to the revised spec:
+- three uses per side (FR-026);
+- Help may replace the first shot or any extra shot after a hit (FR-027);
+- each use consumes one use and ends the turn (FR-030);
+- the player's counter, plus the computer's counter on Hard only (FR-032);
+- Hard draws three distinct target turns (FR-035);
+- the whole cross is revealed as one batch (FR-048).
+
+The design is in [data-model.md](data-model.md) §3–4,
+[contracts/core-api.md](contracts/core-api.md) (`kHelpUsesPerGame`, `helpUsesLeft`,
+`HelpPlanner`), [contracts/app-api.md](contracts/app-api.md) (`BattleController` counters),
+[contracts/ui-screens.md](contracts/ui-screens.md) and
+[contracts/localization.md](contracts/localization.md). The rule in research R8 decides when a
+scheduled use is *due*.
+
+**Independent Test**: In one game, the player uses Help three times (once as an extra shot
+after a hit). The button goes "Help (3)" → "(2)" → "(1)" → "Help used up", and a fourth use
+is impossible. On Hard, the computer's counter beside its name goes 3 → 0 over its first ~20
+turns, never more than one Help per turn. On Easy and Medium no computer counter is shown.
+
+### Tests for the revision (update first, confirm they FAIL)
+
+- [X] T117 [P] [US4] Update `tests/core/HelpTest.cpp`. Replace the single-use assertions
+  (around the current `helpAvailable` checks and the `RejectedAlreadyUsed` check) with:
+  - `helpUsesLeft(Player)` and `helpUsesLeft(Computer)` both start at `kHelpUsesPerGame` (3).
+  - Each applied Help decreases the user's count by exactly 1. The opponent's count does not
+    change (US4 scenario 9).
+  - `helpAvailable(side)` is true at 3, 2 and 1, and false only at 0.
+  - The fourth use returns `RejectedAlreadyUsed` and leaves the state unchanged.
+  - `RejectedNoEffect` (every on-board cross cell already fired upon) does **not** decrease
+    the count (FR-029).
+  - **Help as an extra shot**: the player fires a `Hit` (turn kept), then `useHelp` is
+    `Applied`, the count decreases, and the turn passes to the computer (FR-027, US4
+    scenario 8).
+  - A rejected `useHelp` (wrong turn, wrong phase, off board) never changes the count.
+- [X] T118 [P] [US4] Extend `tests/app/BattleControllerTest.cpp`:
+  - `playerHelpUsesLeft()` goes 3 → 2 → 1 → 0 across three applied player Helps.
+    `playerHelpAvailable()` is false only at 0, and `armHelp()` is then a no-op.
+  - After the player's shot is a `Hit` (mode stays `AwaitingPlayer`), `armHelp()` enters
+    `PlayerHelpTargeting`, and `onPlayerHelp(c)` applies and moves to `ComputerActing`.
+  - `showComputerHelpCounter()` is true for `Difficulty::Hard` and false for Easy and Medium.
+  - `computerHelpUsesLeft()` mirrors `session.helpUsesLeft(Computer)` after a computer Help
+    performed through `tick`.
+  - The `ActionFeedback` of a player Help, and the return value of `tick` for a computer Help,
+    hold **all** cross cells plus any sunk-ship and marking changes in one list (FR-048). A
+    Help that sinks a ship next to the cross returns the cross results first and the `Marked`
+    cells after them.
+  - The strategy is called with `int helpUsesLeft` equal to `session.helpUsesLeft(Computer)`
+    (assert through a recording fake strategy).
+- [X] T119 [P] [US3] Rewrite the Help-timing part of `tests/core/HardStrategyTest.cpp` for
+  FR-035 and research R8:
+  - **Schedule**: `HelpPlanner(rng)` draws three **distinct** turns in `[1, 20]` with a partial
+    Fisher–Yates through `IRandom::nextInt`. Assert the exact `nextInt` calls with
+    `ScriptedRandom`, and that `targetTurns()` is sorted ascending. A bulk check over 10,000
+    seeds finds no duplicates and nothing outside 1–20.
+  - **Due rule**: `shouldUse(turnIndex, firstActionOfTurn, helpUsesLeft, woundedShip)` is true
+    only when `firstActionOfTurn`, `helpUsesLeft > 0`, `!woundedShip`, and
+    `count(targetTurns ≤ turnIndex) > 3 − helpUsesLeft`.
+  - **Deferral**: with targets {3, 4, 10}, a wounded ship on turns 3–5 gives Help on turn 6
+    (uses left 3 → 2), Help again on turn 7 (2 → 1), no Help on turns 8–9, and Help on
+    turn 10.
+  - **One per turn**: never Help on a non-first action. With all three targets due at once,
+    the Helps land on three consecutive free turns.
+  - **Limit**: never Help when `helpUsesLeft == 0`, even if a target turn is reached.
+  - Keep the existing centre-selection and delegation cases. Update their `choose` calls to the
+    `int helpUsesLeft` parameter.
+- [X] T120 [P] [US3] Update `tests/core/StrategyContractTest.cpp`:
+  - The simulated loop passes `int helpUsesLeft`, starting at 3 and decreasing on each
+    returned Help.
+  - It asserts that Hard returns at most 3 Helps per game, and that each Help is the first
+    action of its turn.
+  - Easy and Medium still never return Help (FR-036).
+- [X] T121 [P] [US3] Extend `tests/sim/AiSimulationTest.cpp`:
+  - Pass `session.helpUsesLeft(shooter)` to `choose` instead of `helpAvailable(shooter)`.
+  - In every Hard game, assert that the Hard side applies at most 3 Helps, on distinct
+    computer turns.
+  - Keep the SC-004 and SC-005 assertions unchanged.
+- [X] T122 [P] [US3] Update the `static_assert` in `tests/core/FairnessCompileTest.cpp` to the
+  new `ITargetingStrategy::choose(const ITargetView&, int, bool, int, IRandom&)` signature.
+  It must still have no `Board`/`Fleet` parameter (Principle III).
+
+### Implementation for the revision
+
+- [X] T123 [US4] Core counter:
+  - In `src/core/include/bs/core/Coord.h`, add `constexpr int kHelpUsesPerGame = 3;` next to
+    `kBoardSize`.
+  - In `src/core/include/bs/core/GameSession.h`, replace `std::array<bool, 2> helpUsed_` with
+    `std::array<int, 2> helpUsesLeft_{{kHelpUsesPerGame, kHelpUsesPerGame}}`, and add
+    `int helpUsesLeft(Side) const`.
+  - In `src/core/src/GameSession.cpp`:
+    - `useHelp` returns `RejectedAlreadyUsed` when the count is 0 and decrements it only on
+      `Applied`;
+    - `helpAvailable` returns `helpUsesLeft_[i] > 0`;
+    - confirm that `useHelp` is accepted while the user keeps the turn after a hit.
+
+  This makes T117 pass.
+- [X] T124 [US3] Strategy signature and planner:
+  - In `src/core/include/bs/core/Ai.h`, change `bool helpAvailable` to `int helpUsesLeft` in
+    `ITargetingStrategy::choose` and in `RandomStrategy`, `HuntTargetStrategy` and
+    `HardStrategy`. Update `src/core/src/RandomStrategy.cpp` and
+    `src/core/src/HuntTargetStrategy.cpp`.
+  - In `HelpPlanner`, replace `int targetTurn_` and `targetTurn()` with
+    `std::vector<int> targetTurns_` and `const std::vector<int>& targetTurns() const`. Remove
+    `HardStrategy::helpTurn()`, or make it return `targetTurns()`.
+  - In `src/core/src/HelpPlanner.cpp`:
+    - the constructor draws 3 distinct turns from 1..`kLatestTurn` by partial Fisher–Yates
+      (`nextInt(i, 19)` swaps over the array 1..20), then sorts them;
+    - `shouldUse` implements the due rule from T119;
+    - `HardStrategy::choose` passes `helpUsesLeft` through.
+
+  This makes T119, T120 and T122 pass. Then update `tests/sim/AiSimulationTest.cpp` callers
+  as T121 requires.
+- [X] T125 [US4] App counters, in `src/app/include/bs/app/BattleController.h` and
+  `src/app/src/BattleController.cpp`:
+  - Add `int playerHelpUsesLeft() const`, `int computerHelpUsesLeft() const` and
+    `bool showComputerHelpCounter() const` (`session.difficulty() == Difficulty::Hard`).
+  - Pass `session_.helpUsesLeft(Side::Computer)` to the strategy.
+  - Make sure `armHelp()` is allowed in `AwaitingPlayer` after a hit.
+
+  This makes T118 pass.
+- [X] T126 [US4] Strings, with `{count}` placeholders, in
+  `src/app/include/bs/app/TextKeys.h` and all three `.lang` files, verbatim from
+  [contracts/localization.md](contracts/localization.md):
+
+  | Key | en | ru | vi |
+  |---|---|---|---|
+  | `battle.help` | Help ({count}) | Помощь ({count}) | Trợ giúp ({count}) |
+  | `battle.help.used` | Help used up | Помощь израсходована | Đã hết trợ giúp |
+  | `battle.computer_help` (new key `BattleComputerHelp`) | Help: {count} | Помощь: {count} | Trợ giúp: {count} |
+
+  `LocalizationCompletenessTest` must pass with matching placeholders.
+- [X] T127 [US4] Update `src/game/scenes/BattleScene.{h,cpp}` (rendering only, no game
+  decisions):
+  - **Help button**: shows `format(BattleHelp, {count: playerHelpUsesLeft()})` while uses
+    remain, and disabled `battle.help.used` at 0. It refreshes after every player action and
+    on a language change.
+  - **Computer counter**: on Hard only (`showComputerHelpCounter()`), a `LocalizedLabel`
+    beside the computer's name shows `battle.computer_help` with `computerHelpUsesLeft()`. It
+    refreshes after every `tick` that applied a computer Help, and on a language change.
+  - **One batch**: each Help change list (player or computer) is applied to the `BoardNode`
+    in one pass on one frame, with no per-cell delay (FR-048).
+  - **Layout**: check that the counter fits beside the longest computer name ("Компьютер") at
+    1280 × 720.
+- [X] T128 [US3] Run `ctest -L sim` with the three-use Hard and confirm SC-004 (Hard wins
+  more than it loses against Medium) and SC-005 still pass. Record the new win rates in the
+  commit message. If SC-004 fails, stop and raise it via `/speckit-clarify`; do not tune
+  outside FR-034/FR-035.
+- [ ] T129 [US4] Run `ctest -LE sim` with zero warnings. Then redo quickstart §5 steps 3 and 4,
+  which were rewritten for three uses, on macOS. This also closes T085 and T097. Fix any
+  defect test-first.
+
+**Checkpoint**: Help matches the 2026-10-20 spec for both sides, and the full test suite is
+green.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -951,6 +1121,10 @@ constitution and the success criteria.
   parallel with US2–US4 when staffed.
 - **US6 (Phase 8)**: depends on US1 (`BattleController`, `BattleScene`).
 - **Polish (Phase 9)**: depends on all stories.
+- **Help revision (Phase 10)**: depends on phases 5 and 6, which are already built. Inside
+  it: T117–T122 first (all `[P]`). Then T123 → T124 (the signature change touches the files
+  T123 builds on) → T125 → T126 → T127. T128 and T129 come last. Do Phase 10 before closing
+  T085, T097, T113 and T115, which validate Help.
 
 ### Story completion order
 
@@ -960,6 +1134,7 @@ Setup → Foundational ─┬─▶ US1 (MVP) ─┬─▶ US2
                       │              └─▶ US6
                       └─▶ US5 (independent of gameplay stories)
                                          all ─▶ Polish
+                      US4 + US3 (built) ─▶ Phase 10 Help revision ─▶ T113/T115
 ```
 
 ### Within each user story
@@ -982,6 +1157,8 @@ Setup → Foundational ─┬─▶ US1 (MVP) ─┬─▶ US2
 - **US2**: tests T067–T070 in parallel. T075 in parallel with T071–T073.
 - **US4**: T078 and T079 in parallel. T083 in parallel with T080–T081.
 - **US3**: T086–T090 in parallel.
+- **Phase 10**: tests T117–T122 in parallel. T126 (strings) can run in parallel with
+  T123–T125.
 - **Across stories**: US5 can be built by a second developer while US2–US4 proceed.
 
 ---
@@ -1015,6 +1192,17 @@ Task: "T089 BattleControllerTest (computer Help) in tests/app/BattleControllerTe
 Task: "T090 AiSimulationTest (SC-004/SC-005) in tests/sim/AiSimulationTest.cpp"
 ```
 
+## Parallel Example: Phase 10 (Help revision)
+
+```bash
+Task: "T117 HelpTest three uses in tests/core/HelpTest.cpp"
+Task: "T118 BattleControllerTest counters in tests/app/BattleControllerTest.cpp"
+Task: "T119 HardStrategyTest schedule in tests/core/HardStrategyTest.cpp"
+Task: "T120 StrategyContractTest in tests/core/StrategyContractTest.cpp"
+Task: "T121 AiSimulationTest in tests/sim/AiSimulationTest.cpp"
+Task: "T122 FairnessCompileTest in tests/core/FairnessCompileTest.cpp"
+```
+
 ---
 
 ## Implementation Strategy
@@ -1036,6 +1224,7 @@ Task: "T090 AiSimulationTest (SC-004/SC-005) in tests/sim/AiSimulationTest.cpp"
 | + US5 | settings and live language switch |
 | + US6 | exit confirmation (completes the P3 scope) |
 | Polish | Windows verification, layout, full quickstart |
+| Phase 10 | three Help uses per side, counters, Hard's three-turn schedule (2026-10-20 spec) |
 
 Each step leaves all earlier stories working, and the full test suite must stay green.
 

@@ -138,14 +138,22 @@ decision for a mandated technology (constitution, Technology Stack).
     - A cluster with ≥ 2 cells: target a random `Unknown` cell at either end of the line.
     - No clusters: random, as in Easy.
   - **Hard (`HardStrategy`)**: a decorator over `HuntTargetStrategy` plus a `HelpPlanner`.
-    - The planner draws the target turn in `[1, 20]` at construction.
-    - On the first action of a computer turn with index ≥ target and no wounded cluster, it
-      returns Help.
+    - The planner draws **three distinct** target turns in `[1, 20]` at construction (partial
+      Fisher–Yates through `IRandom`, revised 2026-10-20 for FR-026's three uses).
+    - A use is *due* when its target turn has been reached and it has not been spent:
+      `count(targets ≤ turnIndex) > 3 − helpUsesLeft`. On the first action of a computer turn
+      with a due use and no wounded cluster, it returns Help. Since Help ends the turn, a use
+      deferred by a wounded ship or by a collision with another target turn simply stays due
+      until the next free turn; no explicit queue is stored.
     - The centre is chosen at random among cells whose whole on-board cross is `Unknown`, or
       failing that among cells with the most `Unknown` cross cells (FR-035).
   - **Turn counting**: the session counts how many times the turn has passed to the computer.
 - **Rationale**: Each difficulty is its own class behind one interface (Open/Closed), and Hard
-  reuses Medium by composition. The behaviour is deterministic with a seeded `IRandom`, so the
+  reuses Medium by composition. Deriving "due" from the counter keeps the planner stateless
+  beyond its drawn turns, so it cannot drift from the session's own Help counter.
+- **Alternatives considered (2026-10-20)**: *one target turn plus fixed spacing* — predictable
+  to players and not what FR-035 says. *Re-drawing a turn after each use* — harder to test and
+  could push uses past turn 20 unpredictably. Rejected. The behaviour is deterministic with a seeded `IRandom`, so the
   1,000-game SC-005 and 100-game SC-004 simulations are reproducible.
 
 ## R9. Localization resources and live switching

@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <numeric>
+#include <utility>
 #include <vector>
 
 #include "bs/core/Ai.h"
@@ -5,11 +8,29 @@
 namespace bs {
 namespace core {
 
-HelpPlanner::HelpPlanner(IRandom& rng) : targetTurn_(rng.nextInt(1, kLatestTurn)) {}
+constexpr int HelpPlanner::kLatestTurn; // C++14: definition for ODR-uses
 
-bool HelpPlanner::shouldUse(int turnIndex, bool firstActionOfTurn, bool helpAvailable,
+HelpPlanner::HelpPlanner(IRandom& rng) {
+    // Partial Fisher–Yates over the turns 1..kLatestTurn: a uniform choice of distinct turns.
+    std::vector<int> turns(kLatestTurn);
+    std::iota(turns.begin(), turns.end(), 1);
+    for (int i = 0; i < kHelpUsesPerGame; ++i) {
+        const int j = rng.nextInt(i, kLatestTurn - 1);
+        std::swap(turns[static_cast<std::size_t>(i)], turns[static_cast<std::size_t>(j)]);
+    }
+    targetTurns_.assign(turns.begin(), turns.begin() + kHelpUsesPerGame);
+    std::sort(targetTurns_.begin(), targetTurns_.end());
+}
+
+bool HelpPlanner::shouldUse(int turnIndex, bool firstActionOfTurn, int helpUsesLeft,
                             bool woundedShip) const {
-    return helpAvailable && firstActionOfTurn && turnIndex >= targetTurn_ && !woundedShip;
+    if (!firstActionOfTurn || helpUsesLeft <= 0 || woundedShip) {
+        return false;
+    }
+    const auto reached = std::count_if(targetTurns_.begin(), targetTurns_.end(),
+                                       [turnIndex](int turn) { return turn <= turnIndex; });
+    const int spent = kHelpUsesPerGame - helpUsesLeft;
+    return reached > spent;
 }
 
 Coord HelpPlanner::chooseCentre(const ITargetView& view, IRandom& rng) const {
@@ -47,12 +68,12 @@ Coord HelpPlanner::chooseCentre(const ITargetView& view, IRandom& rng) const {
 }
 
 AiAction HardStrategy::choose(const ITargetView& view, int turnIndex, bool firstActionOfTurn,
-                              bool helpAvailable, IRandom& rng) {
+                              int helpUsesLeft, IRandom& rng) {
     const bool wounded = hunt_.observe(view);
-    if (planner_.shouldUse(turnIndex, firstActionOfTurn, helpAvailable, wounded)) {
+    if (planner_.shouldUse(turnIndex, firstActionOfTurn, helpUsesLeft, wounded)) {
         return {AiAction::Kind::Help, planner_.chooseCentre(view, rng)};
     }
-    return hunt_.choose(view, turnIndex, firstActionOfTurn, helpAvailable, rng);
+    return hunt_.choose(view, turnIndex, firstActionOfTurn, helpUsesLeft, rng);
 }
 
 } // namespace core

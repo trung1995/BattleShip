@@ -43,6 +43,7 @@ namespace app {
     X(BattleHelp, "battle.help")                                                                  \
     X(BattleHelpUsed, "battle.help.used")                                                         \
     X(BattleHelpHint, "battle.help.hint")                                                         \
+    X(BattleComputerHelp, "battle.computer_help")                                                 \
     X(BattleWinner, "battle.winner")                                                              \
     X(GameOverNewGame, "gameover.new_game")                                                       \
     X(GameOverMenu, "gameover.menu")                                                              \

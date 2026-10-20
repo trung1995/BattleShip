@@ -74,6 +74,7 @@ build\win\bin\BattleShip\Debug\BattleShip.exe
 | SC-005 | `sim` label: 1,000 seeded games per difficulty | zero repeated or illegal computer actions |
 | SC-006 | `LocalizationCompletenessTest` | identical key sets and placeholders in en/ru/vi |
 | Principle III | `TargetViewTest` | unrevealed ship cells always read `Unknown` |
+| FR-026/035 | `HelpTest`, `HardStrategyTest`, `sim` label | each side uses Help at most 3 times; Hard's uses fall on 3 distinct turns |
 
 ## 5. Manual acceptance walkthrough (the game build)
 
@@ -85,9 +86,12 @@ build\win\bin\BattleShip\Debug\BattleShip.exe
    drop on the dock to remove, Auto-place remaining, then crowd the board until "cannot fit"
    appears and check nothing moved.
 3. **US3**: on Medium, after two aligned hits, the computer fires only at the line's ends. On
-   Hard, the computer uses Help once within its first ~20 turns (watch for the cross effect).
-4. **US4**: use Help in a corner, at an edge, and next to fired cells. Check the clipped cross,
-   that the turn passes, and that the button shows "used".
+   Hard, the computer uses Help up to three times, on three different turns within its first
+   ~20 turns (watch for the cross effect); its counter next to its name goes 3 → 0. Easy and
+   Medium show no computer counter.
+4. **US4**: use Help in a corner, at an edge, and next to fired cells. Check the clipped cross
+   appears all at once, that the turn passes, and that the button goes "Help (3)" → (2) → (1)
+   → "used up". Hit a ship, then use Help as the extra shot: it resolves and the turn passes.
 5. **US5**: switch the language during the menu and the battle. All text changes immediately,
    including the computer's name ("Computer" / "Компьютер" / "Máy tính"). Enter a 25-character
    Cyrillic or Vietnamese name; it is capped at 20 with no clipping. Toggle sound and music,

@@ -96,7 +96,7 @@ HelpOutcome GameSession::useHelp(Side user, Coord centre) {
         outcome.status = ActionStatus::RejectedOffBoard;
         return outcome;
     }
-    if (helpUsed_[index(user)]) {
+    if (helpUsesLeft_[index(user)] == 0) {
         outcome.status = ActionStatus::RejectedAlreadyUsed;
         return outcome;
     }
@@ -135,7 +135,7 @@ HelpOutcome GameSession::useHelp(Side user, Coord centre) {
         }
     }
 
-    helpUsed_[index(user)] = true;
+    --helpUsesLeft_[index(user)];
     outcome.status = ActionStatus::Applied;
     if (board.remainingCells() == 0) {
         phase_ = Phase::Finished;
@@ -154,7 +154,7 @@ Side GameSession::winner() const {
     return winner_;
 }
 
-bool GameSession::helpAvailable(Side side) const { return !helpUsed_[index(side)]; }
+int GameSession::helpUsesLeft(Side side) const { return helpUsesLeft_[index(side)]; }
 
 int GameSession::turnsTaken(Side side) const { return turnsTaken_[index(side)]; }
 

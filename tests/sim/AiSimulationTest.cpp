@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <array>
+#include <vector>
 #include <cstdio>
 #include <memory>
 
@@ -15,6 +17,8 @@ namespace {
 struct GameResult {
     Side winner = Side::Player;
     int rejected = 0;
+    // The turn index of every applied Help, per side (FR-026, FR-035).
+    std::array<std::vector<int>, 2> helpTurns;
 };
 
 // Plays one headless game. `playerSide` plays as Side::Player, `computerSide` as Side::Computer.
@@ -38,13 +42,17 @@ GameResult play(Difficulty playerSide, Difficulty computerSide, std::uint32_t se
         ITargetingStrategy& strategy = *strategies[shooter == Side::Player ? 0 : 1];
         const AiAction action = strategy.choose(session.viewOf(opponentOf(shooter)),
                                                 session.turnsTaken(shooter), firstAction,
-                                                session.helpAvailable(shooter), rng);
-        const ActionStatus status = action.kind == AiAction::Kind::Help
-                                        ? session.useHelp(shooter, action.target).status
-                                        : session.fire(shooter, action.target).status;
+                                                session.helpUsesLeft(shooter), rng);
+        const bool isHelp = action.kind == AiAction::Kind::Help;
+        const int turn = session.turnsTaken(shooter);
+        const ActionStatus status = isHelp ? session.useHelp(shooter, action.target).status
+                                           : session.fire(shooter, action.target).status;
         if (status != ActionStatus::Applied) {
             ++result.rejected;
             break;
+        }
+        if (isHelp) {
+            result.helpTurns[shooter == Side::Player ? 0 : 1].push_back(turn);
         }
         ++actions;
     }
@@ -72,6 +80,18 @@ TEST(AiSimulation, EveryDifficultyNeverMakesAnIllegalMove) {
             const GameResult result = play(d, d, seed);
             ASSERT_EQ(result.rejected, 0) << "difficulty " << static_cast<int>(d) << " seed " << seed;
         }
+    }
+}
+
+// FR-026, FR-035, FR-036: Hard uses Help at most three times, never twice in one turn; Easy and
+// Medium never use it.
+TEST(AiSimulation, HelpUsesStayWithinThreeOnDistinctTurns) {
+    for (std::uint32_t seed = 1; seed <= 1000; ++seed) {
+        const GameResult result = play(Difficulty::Hard, Difficulty::Medium, seed);
+        const std::vector<int>& hard = result.helpTurns[0];
+        ASSERT_LE(hard.size(), static_cast<std::size_t>(kHelpUsesPerGame)) << "seed " << seed;
+        ASSERT_TRUE(std::adjacent_find(hard.begin(), hard.end()) == hard.end()) << "seed " << seed;
+        ASSERT_TRUE(result.helpTurns[1].empty()) << "Medium used Help, seed " << seed;
     }
 }
 

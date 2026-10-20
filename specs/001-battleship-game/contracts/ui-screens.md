@@ -56,9 +56,9 @@ Launch ─▶ Main Menu ── New Game ─▶ Difficulty pick ─▶ Placement 
 | Own board (left) | the player's ships with the computer's results |
 | Target board (right) | the computer's board as a `TargetView`; unrevealed ships are never drawn (FR-016) |
 | Turn banner | "Your turn" / "{computer} is firing…" (FR-024) |
-| Name labels | player display name and computer display name (FR-042) |
+| Name labels | player display name and computer display name (FR-042). On Hard only, a Help counter (`battle.computer_help`, e.g. "Help: 2") sits next to the computer's name and updates after each computer Help (FR-032) |
 | Left-click a target cell | normal shot; ignored during the computer's turn; a fired or marked cell is rejected with a brief message (Edge Cases) |
-| Help button | shows available or used state (FR-032). Click → targeting mode: a cross preview follows the mouse over the target board, clipped at edges and showing already-fired cells as skipped. Left-click to use, right-click or Esc to cancel |
+| Help button | shows the remaining uses, e.g. "Help (2)", or a disabled "used up" state at 0 (FR-032). Enabled on the player's turn, including an extra shot after a hit (FR-027). Click → targeting mode: a cross preview follows the mouse over the target board, clipped at edges and showing already-fired cells as skipped. Left-click to use, right-click or Esc to cancel. The whole cross is revealed at once, then any sunk-ship marking (FR-048) |
 | Cell visuals | Unknown, Miss (dot), Hit (flame/cross), Sunk (ship outline + darker tint), Marked (faint dot, visually distinct from a miss) |
 | Computer pacing | one action every 0.8 s, each rendered before the next (FR-025) |
 | Menu button / Esc | opens the confirmation dialog: Leave battle? [Stay] [Leave] (FR-044) |

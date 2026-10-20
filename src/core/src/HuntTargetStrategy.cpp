@@ -77,7 +77,7 @@ bool HuntTargetStrategy::observe(const ITargetView& view) {
 }
 
 AiAction HuntTargetStrategy::choose(const ITargetView& view, int /*turnIndex*/,
-                                    bool /*firstActionOfTurn*/, bool /*helpAvailable*/,
+                                    bool /*firstActionOfTurn*/, int /*helpUsesLeft*/,
                                     IRandom& rng) {
     observe(view);
     std::set<Coord> visited;

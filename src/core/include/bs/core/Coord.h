@@ -6,6 +6,7 @@ namespace bs {
 namespace core {
 
 constexpr int kBoardSize = 10;
+constexpr int kHelpUsesPerGame = 3; // per participant (FR-026)
 
 struct Coord {
     int row;

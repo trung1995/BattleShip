@@ -30,6 +30,9 @@ value   := any UTF-8 text; "\n" inside the value is a newline; "{" ident "}" is 
 | `name.computer` | Computer | Компьютер | Máy tính |
 | `name.player_default` | Player | Игрок | Người chơi |
 | `battle.winner` | {name} wins! | {name} побеждает! | {name} chiến thắng! |
+| `battle.help` | Help ({count}) | Помощь ({count}) | Trợ giúp ({count}) |
+| `battle.help.used` | Help used up | Помощь израсходована | Đã hết trợ giúp |
+| `battle.computer_help` | Help: {count} | Помощь: {count} | Trợ giúp: {count} |
 
 The full catalogue covers:
 - the menu, difficulty pick, settings and placement screens, including the placement errors

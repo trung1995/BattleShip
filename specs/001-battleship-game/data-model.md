@@ -1,6 +1,6 @@
 # Data Model: Single-Player Battleship Game
 
-**Feature**: `001-battleship-game` | **Date**: 2026-10-17 | **Plan**: [plan.md](plan.md)
+**Feature**: `001-battleship-game` | **Date**: 2026-10-17 (revised 2026-10-20) | **Plan**: [plan.md](plan.md)
 
 All entities in sections 1–4 live in `battleship_core` (standard library only, no engine).
 Settings and localization (section 5) live in `battleship_app`. Types are described in a
@@ -113,13 +113,16 @@ board uses the same projection, so the computer's ships stay hidden (FR-016).
 ### HelpOutcome
 | Field | Type | Notes |
 |---|---|---|
-| status | `Applied`, `RejectedNotYourTurn`, `RejectedAlreadyUsed`, `RejectedNoEffect`, `RejectedOffBoard` or `RejectedWrongPhase` | `NoEffect` means every on-board cross cell was already fired upon (FR-029) |
+| status | `Applied`, `RejectedNotYourTurn`, `RejectedAlreadyUsed`, `RejectedNoEffect`, `RejectedOffBoard` or `RejectedWrongPhase` | `AlreadyUsed` means all three uses are spent (FR-026); `NoEffect` means every on-board cross cell was already fired upon (FR-029) and consumes no use |
 | affected | list of Coord | on-board, previously untouched cross cells, in the order resolved |
 | sunkShips | list of ShipId | |
 | changes | list of CellChange | |
 | gameOver | bool | |
 
-The turn always passes after Help unless the game is over (FR-030, FR-031).
+The turn always passes after Help unless the game is over (FR-030, FR-031). Help may replace
+the first shot of a turn or any extra shot earned by a hit (FR-027); since it ends the turn, at
+most one Help is used per turn. All `changes` of one Help are rendered together as one batch
+(FR-048).
 
 ### Rules applied to every shot (normal or Help cell)
 1. Set the cell to `Miss` or `Hit`.
@@ -138,7 +141,7 @@ The turn always passes after Help unless the game is over (FR-030, FR-031).
 | side | Side | |
 | board | Board | |
 | fleet | Fleet | |
-| helpAvailable | bool | starts true and becomes false after use (FR-026) |
+| helpUsesLeft | int 0–3 | starts at `kHelpUsesPerGame = 3`; each applied Help decrements it; Help is available while > 0 (FR-026, FR-030) |
 | turnsTaken | int | how many times the turn passed to this side (FR-035 counting) |
 
 Display names are not stored in the core. The app layer resolves them: the player's name comes
@@ -172,12 +175,23 @@ Placement ───────────────────────�
           normal shot = Miss           ┌────────────┐
  ┌──────── Player's turn ─────────────▶│ Computer's │
  │  Hit/Sunk: same side shoots again   │   turn     │
- │  Help: turn passes                  └─────┬──────┘
+ │  Help (first or extra shot,         └─────┬──────┘
+ │        uses left > 0): turn passes        │
  └─────────────────────────────────────────── ┘ Miss or Help
 ```
 
 - Each switch to a side increments that side's `turnsTaken`.
 - A shot that ends the game ends it immediately; no extra shot is given.
+
+### Hard AI Help schedule (FR-035)
+| Field | Type | Notes |
+|---|---|---|
+| targetTurns | 3 distinct ints in 1–20, sorted | drawn once at game start |
+| due | derived | `count(targetTurns ≤ turnsTaken(Computer)) − (3 − helpUsesLeft(Computer))` |
+
+On the first action of a computer turn, Help is used when `due > 0`, `helpUsesLeft > 0` and no
+wounded ship is being tracked. A use deferred by a wounded ship, or colliding with another use,
+simply stays due and is taken on the next free turn. Uses still due at game end are lost.
 
 ## 5. Application-layer data (`battleship_app`)
 
@@ -208,7 +222,9 @@ test (SC-006).
 ### UI session state (BattleController)
 | Field | Type | Notes |
 |---|---|---|
-| mode | `AwaitingPlayer`, `PlayerHelpTargeting`, `ComputerActing`, `ConfirmExit` or `GameOver` | |
+| mode | `AwaitingPlayer`, `PlayerHelpTargeting`, `ComputerActing`, `ConfirmExit` or `GameOver` | `AwaitingPlayer` also covers an extra shot after a hit, so Help can be armed there (FR-027) |
+| playerHelpUsesLeft | int 0–3 | shown on the Help button (FR-032) |
+| computerHelpUsesLeft | int 0–3, shown only on Hard | shown next to the computer's name (FR-032) |
 | computerDelay | seconds, default 0.8 | time until the next computer action |
 | pendingChanges | list of CellChange | handed to the view for rendering |
 

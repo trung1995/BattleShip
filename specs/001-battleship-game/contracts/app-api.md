@@ -191,16 +191,23 @@ BattleController(bs::core::GameSession&, std::unique_ptr<bs::core::ITargetingStr
                  bs::core::IRandom&, IGameAudio&, double computerDelaySeconds = 0.8);
 Mode mode() const;                           // AwaitingPlayer | PlayerHelpTargeting | ComputerActing | ConfirmExit | GameOver
 ActionFeedback onPlayerFire(bs::core::Coord);    // rejected when mode != AwaitingPlayer (Edge Cases)
-void armHelp();  void disarmHelp();              // enters or leaves PlayerHelpTargeting; no-op if help used
+void armHelp();  void disarmHelp();              // enters or leaves PlayerHelpTargeting; no-op if no uses left.
+                                                 // Allowed in AwaitingPlayer, including on an extra shot after a hit (FR-027)
 ActionFeedback onPlayerHelp(bs::core::Coord);    // in PlayerHelpTargeting only
 std::vector<bs::core::CellChange> tick(double dtSeconds);   // performs at most one computer action per delay
 void requestExit();  void cancelExit();  bool confirmExit();     // FR-044; confirmExit() returns true to navigate
 TurnIndicator turnIndicator() const;             // whose turn, for FR-024
-bool playerHelpAvailable() const;                // FR-032
+bool playerHelpAvailable() const;                // helpUsesLeft(Player) > 0
+int  playerHelpUsesLeft() const;                 // FR-032: 3, 2, 1 or 0 on the Help button
+bool showComputerHelpCounter() const;            // true only on Hard (FR-032)
+int  computerHelpUsesLeft() const;               // FR-032: shown next to the computer's name on Hard
 ```
 
 - `ActionFeedback` carries the `ActionStatus`, a `TextKey` explaining any rejection the player
-  caused, and the `CellChange` list to render in the same frame (SC-009).
+  caused, and the `CellChange` list to render in the same frame (SC-009). For Help, from either
+  side, the list holds the whole cross plus any sunk-ship marking and is rendered as one batch
+  (FR-048); `tick` returns a computer Help the same way.
+- The strategy is called with `session.helpUsesLeft(Computer)`, never a bool.
 - During `ConfirmExit`, `tick` performs nothing and returns no changes, so cancelling resumes
   the exact state (US6 scenario 2).
 - Exit requests from the placement and game-over screens do not use this controller and

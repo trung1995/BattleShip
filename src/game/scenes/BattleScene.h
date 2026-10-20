@@ -41,6 +41,7 @@ private:
     BoardNode* targetBoard_ = nullptr;
     Banner* banner_ = nullptr;
     LocalizedLabel* helpHint_ = nullptr;
+    LocalizedLabel* computerHelp_ = nullptr; // Hard only (FR-032)
     TextButton* helpButton_ = nullptr;
     HelpPreviewNode* helpPreview_ = nullptr;
     Toast* toast_ = nullptr;

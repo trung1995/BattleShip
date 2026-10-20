@@ -8,7 +8,7 @@ using namespace bs::core;
 
 // Principle III, enforced by types: a strategy's only window onto the opponent is the read-only
 // public view. There is no Board or Fleet parameter through which it could see unrevealed ships.
-using ChooseSignature = AiAction (ITargetingStrategy::*)(const ITargetView&, int, bool, bool, IRandom&);
+using ChooseSignature = AiAction (ITargetingStrategy::*)(const ITargetView&, int, bool, int, IRandom&);
 static_assert(std::is_same<decltype(&ITargetingStrategy::choose), ChooseSignature>::value,
               "strategies must decide from the public ITargetView only");
 

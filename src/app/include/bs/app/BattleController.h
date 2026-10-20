@@ -37,11 +37,15 @@ public:
 
     Mode mode() const { return mode_; }
     ActionFeedback onPlayerFire(bs::core::Coord target);
-    // Help targeting (FR-026..FR-032): arm, then pick the centre, or disarm to cancel.
+    // Help targeting (FR-026..FR-032): arm, then pick the centre, or disarm to cancel. Help can be
+    // armed for any shot of the player's turn, including the extra shot after a hit (FR-027).
     void armHelp();
     void disarmHelp();
     ActionFeedback onPlayerHelp(bs::core::Coord centre);
     bool playerHelpAvailable() const;
+    int playerHelpUsesLeft() const;      // shown on the Help button (FR-032)
+    bool showComputerHelpCounter() const; // only on Hard (FR-032)
+    int computerHelpUsesLeft() const;    // shown beside the computer's name on Hard
     // Leaving an in-progress battle needs confirmation (FR-044). While the prompt is open the
     // battle is frozen; cancelling resumes the exact state, including the computer's delay.
     void requestExit();

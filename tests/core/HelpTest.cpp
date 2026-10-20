@@ -66,19 +66,60 @@ TEST(Help, CentreWhoseWholeCrossIsFiredUponIsRejectedAndNotConsumed) {
     ASSERT_EQ(session.currentTurn(), Side::Player);
     const HelpOutcome outcome = session.useHelp(Side::Player, {9, 0});
     EXPECT_EQ(outcome.status, ActionStatus::RejectedNoEffect);
-    EXPECT_TRUE(session.helpAvailable(Side::Player));
+    EXPECT_EQ(session.helpUsesLeft(Side::Player), kHelpUsesPerGame); // not consumed (FR-029)
     EXPECT_EQ(session.currentTurn(), Side::Player);
 }
 
-TEST(Help, CanBeUsedOncePerParticipant) {
+TEST(Help, EachParticipantStartsWithThreeUses) {
+    GameSession session = startedSession();
+    EXPECT_EQ(kHelpUsesPerGame, 3);
+    EXPECT_EQ(session.helpUsesLeft(Side::Player), 3);
+    EXPECT_EQ(session.helpUsesLeft(Side::Computer), 3);
+    EXPECT_TRUE(session.helpAvailable(Side::Player));
+}
+
+TEST(Help, EachUseConsumesOneAndAFourthIsRejected) {
+    GameSession session = startedSession();
+    // Three crosses on empty water that do not overlap.
+    const Coord centres[] = {{7, 1}, {7, 4}, {7, 7}};
+    for (int used = 1; used <= kHelpUsesPerGame; ++used) {
+        ASSERT_TRUE(session.helpAvailable(Side::Player));
+        ASSERT_EQ(session.useHelp(Side::Player, centres[used - 1]).status, ActionStatus::Applied);
+        EXPECT_EQ(session.helpUsesLeft(Side::Player), kHelpUsesPerGame - used);
+        EXPECT_EQ(session.helpUsesLeft(Side::Computer), kHelpUsesPerGame); // US4 scenario 9
+        ASSERT_EQ(session.fire(Side::Computer, {9, used}).status, ActionStatus::Applied); // miss
+    }
+    EXPECT_FALSE(session.helpAvailable(Side::Player));
+
+    const int computerTurns = session.turnsTaken(Side::Computer);
+    const HelpOutcome fourth = session.useHelp(Side::Player, {9, 5});
+    EXPECT_EQ(fourth.status, ActionStatus::RejectedAlreadyUsed);
+    EXPECT_TRUE(fourth.changes.empty());
+    EXPECT_EQ(session.helpUsesLeft(Side::Player), 0);
+    EXPECT_EQ(session.currentTurn(), Side::Player);
+    EXPECT_EQ(session.turnsTaken(Side::Computer), computerTurns);
+    EXPECT_EQ(session.viewOf(Side::Computer).at({9, 5}), Knowledge::Unknown);
+}
+
+TEST(Help, CountersAreSeparatePerParticipant) {
     GameSession session = startedSession();
     ASSERT_EQ(session.useHelp(Side::Player, {7, 4}).status, ActionStatus::Applied);
-    EXPECT_FALSE(session.helpAvailable(Side::Player));
-    EXPECT_TRUE(session.helpAvailable(Side::Computer)); // separate uses (US4 scenario 7)
-
     ASSERT_EQ(session.useHelp(Side::Computer, {7, 4}).status, ActionStatus::Applied);
-    EXPECT_FALSE(session.helpAvailable(Side::Computer));
-    EXPECT_EQ(session.useHelp(Side::Player, {7, 7}).status, ActionStatus::RejectedAlreadyUsed);
+    ASSERT_EQ(session.useHelp(Side::Player, {7, 7}).status, ActionStatus::Applied);
+    EXPECT_EQ(session.helpUsesLeft(Side::Player), 1);
+    EXPECT_EQ(session.helpUsesLeft(Side::Computer), 2);
+}
+
+TEST(Help, CanReplaceTheExtraShotAfterAHit) {
+    GameSession session = startedSession();
+    const ShotOutcome hit = session.fire(Side::Player, {0, 0});
+    ASSERT_EQ(hit.result, ShotResult::Hit);
+    ASSERT_EQ(session.currentTurn(), Side::Player); // the extra shot (FR-019)
+
+    const HelpOutcome outcome = session.useHelp(Side::Player, {7, 4});
+    EXPECT_EQ(outcome.status, ActionStatus::Applied); // FR-027, US4 scenario 8
+    EXPECT_EQ(session.helpUsesLeft(Side::Player), kHelpUsesPerGame - 1);
+    EXPECT_EQ(session.currentTurn(), Side::Computer);
 }
 
 TEST(Help, TurnPassesEvenWhenItHits) {
@@ -96,7 +137,8 @@ TEST(Help, IsRejectedOutOfTurnOffBoardOrOutsideTheBattle) {
     GameSession session = startedSession();
     EXPECT_EQ(session.useHelp(Side::Computer, {5, 5}).status, ActionStatus::RejectedNotYourTurn);
     EXPECT_EQ(session.useHelp(Side::Player, {-1, 5}).status, ActionStatus::RejectedOffBoard);
-    EXPECT_TRUE(session.helpAvailable(Side::Player));
+    EXPECT_EQ(session.helpUsesLeft(Side::Player), kHelpUsesPerGame);
+    EXPECT_EQ(session.helpUsesLeft(Side::Computer), kHelpUsesPerGame);
 }
 
 TEST(Help, SinkingResolvesTheCrossFirstThenMarks) {

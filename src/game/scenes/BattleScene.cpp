@@ -1,6 +1,7 @@
 #include "scenes/BattleScene.h"
 
 #include <new>
+#include <string>
 
 #include "GameServices.h"
 #include "Theme.h"
@@ -70,12 +71,31 @@ bool BattleScene::init() {
 
         const Side owner = b.owner;
         const float centreX = b.x - BoardNode::kFrameLeft + frameWidth / 2;
+        // On Hard the computer's remaining Help uses sit beside its name at the frame's right
+        // edge, and the name centres in the rest of the line (FR-032).
+        const bool withHelpCounter = owner == Side::Computer && controller->showComputerHelpCounter();
+        const float counterWidth = 120.0f;
+        const float nameWidth = withHelpCounter ? frameWidth - counterWidth : frameWidth;
         auto name = LocalizedLabel::create(
             loc, [services, owner] { return services->localizer().displayName(owner, services->settings()); },
             27.0f, theme::Face::Caps);
-        name->setMaxWidth(frameWidth);
-        name->setPosition(centreX, 592.0f);
+        name->setMaxWidth(nameWidth);
+        name->setPosition(centreX - frameWidth / 2 + nameWidth / 2, 592.0f);
         addChild(name);
+
+        if (withHelpCounter) {
+            computerHelp_ = LocalizedLabel::create(
+                loc,
+                [services, controller] {
+                    return services->localizer().format(
+                        TextKey::BattleComputerHelp, {{"count", std::to_string(controller->computerHelpUsesLeft())}});
+                },
+                18.0f, theme::Face::Italic);
+            computerHelp_->setTextColor(theme::kGold);
+            computerHelp_->setMaxWidth(counterWidth);
+            computerHelp_->setPosition(centreX + frameWidth / 2 - counterWidth / 2, 592.0f);
+            addChild(computerHelp_);
+        }
 
         auto caption = LocalizedLabel::forKey(loc, b.caption, 18.0f, theme::Face::Italic);
         caption->setTextColor(theme::kMuted);
@@ -98,8 +118,9 @@ bool BattleScene::init() {
     helpButton_ = TextButton::create(
         loc,
         [services, controller] {
-            return services->localizer().text(controller->playerHelpAvailable() ? TextKey::BattleHelp
-                                                                                 : TextKey::BattleHelpUsed);
+            if (!controller->playerHelpAvailable()) return services->localizer().text(TextKey::BattleHelpUsed);
+            return services->localizer().format(TextKey::BattleHelp,
+                                                {{"count", std::to_string(controller->playerHelpUsesLeft())}});
         },
         cocos2d::Size(214, 76), [this] { onHelpButton(); }, TextButton::Style::HelpReady, 22.0f);
     helpButton_->setPosition(640, 332);
@@ -249,6 +270,8 @@ void BattleScene::onTargetClicked(const cocos2d::Vec2& worldPoint) {
 
 void BattleScene::update(float dt) { renderChanges(controller_->tick(static_cast<double>(dt))); }
 
+// Every change list, including a whole Help cross with its marking, is applied in one pass on
+// one frame (FR-048, SC-009).
 void BattleScene::renderChanges(const std::vector<bs::core::CellChange>& changes) {
     if (!changes.empty()) {
         ownBoard_->applyChanges(changes, Side::Player);
@@ -258,6 +281,9 @@ void BattleScene::renderChanges(const std::vector<bs::core::CellChange>& changes
     banner_->setStyle(turn.side == Side::Player ? Banner::Style::Parchment : Banner::Style::Wax);
     banner_->refresh();
     helpButton_->caption()->refresh();
+    if (computerHelp_ != nullptr) {
+        computerHelp_->refresh();
+    }
     if (controller_->mode() == bs::app::Mode::PlayerHelpTargeting) {
         helpButton_->setStyle(TextButton::Style::HelpArmed);
     } else {

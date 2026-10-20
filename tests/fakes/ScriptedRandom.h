@@ -1,6 +1,8 @@
 #pragma once
 
 #include <deque>
+#include <utility>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -14,9 +16,12 @@ public:
 
     void push(int value) { values_.push_back(value); }
     int calls() const { return calls_; }
+    // The (lo, hi) of every call, in order.
+    const std::vector<std::pair<int, int>>& ranges() const { return ranges_; }
 
     int nextInt(int lo, int hi) override {
         ++calls_;
+        ranges_.emplace_back(lo, hi);
         if (values_.empty()) {
             return lo;
         }
@@ -33,4 +38,5 @@ public:
 private:
     std::deque<int> values_;
     int calls_ = 0;
+    std::vector<std::pair<int, int>> ranges_;
 };

@@ -1,4 +1,6 @@
 #include <memory>
+#include <set>
+#include <utility>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -20,16 +22,16 @@ namespace {
 class ScriptedStrategy final : public ITargetingStrategy {
 public:
     explicit ScriptedStrategy(std::vector<AiAction> actions) : actions_(std::move(actions)) {}
-    AiAction choose(const ITargetView&, int turnIndex, bool firstActionOfTurn, bool helpAvailable,
+    AiAction choose(const ITargetView&, int turnIndex, bool firstActionOfTurn, int helpUsesLeft,
                     IRandom&) override {
         lastTurnIndex = turnIndex;
         lastFirstAction = firstActionOfTurn;
-        lastHelpAvailable = helpAvailable;
+        lastHelpUsesLeft = helpUsesLeft;
         return actions_.at(next_++);
     }
     int lastTurnIndex = -1;
     bool lastFirstAction = false;
-    bool lastHelpAvailable = false;
+    int lastHelpUsesLeft = -1;
 
 private:
     std::vector<AiAction> actions_;
@@ -37,12 +39,13 @@ private:
 };
 
 AiAction shot(int row, int col) { return {AiAction::Kind::Shot, {row, col}}; }
+AiAction help(int row, int col) { return {AiAction::Kind::Help, {row, col}}; }
 } // namespace
 
 class BattleControllerTest : public ::testing::Test {
 protected:
-    void start(std::vector<AiAction> computerActions) {
-        session = std::make_unique<GameSession>(Difficulty::Easy, knownFleet());
+    void start(std::vector<AiAction> computerActions, Difficulty difficulty = Difficulty::Easy) {
+        session = std::make_unique<GameSession>(difficulty, knownFleet());
         session->playerFleet() = knownFleet();
         ASSERT_EQ(session->startBattle(), StartStatus::Started);
         auto owned = std::make_unique<ScriptedStrategy>(std::move(computerActions));
@@ -156,7 +159,8 @@ TEST_F(BattleControllerTest, PlayerHelpAppliesAndPassesTheTurn) {
     EXPECT_EQ(feedback.status, ActionStatus::Applied);
     EXPECT_FALSE(feedback.changes.empty());
     EXPECT_EQ(controller->mode(), Mode::ComputerActing);
-    EXPECT_FALSE(controller->playerHelpAvailable());
+    EXPECT_EQ(controller->playerHelpUsesLeft(), kHelpUsesPerGame - 1);
+    EXPECT_TRUE(controller->playerHelpAvailable());
 }
 
 TEST_F(BattleControllerTest, HelpIsOnlyAcceptedWhileTargeting) {
@@ -182,17 +186,64 @@ TEST_F(BattleControllerTest, HelpWithNoEffectStaysInTargetingWithAMessage) {
     ASSERT_TRUE(feedback.hasMessage);
     EXPECT_EQ(feedback.message, TextKey::BattleRejectHelpNoEffect);
     EXPECT_EQ(controller->mode(), Mode::PlayerHelpTargeting);
-    EXPECT_TRUE(controller->playerHelpAvailable());
+    EXPECT_EQ(controller->playerHelpUsesLeft(), kHelpUsesPerGame);
 }
 
-TEST_F(BattleControllerTest, ArmHelpDoesNothingOnceHelpIsUsed) {
-    start({shot(9, 9)});
-    controller->armHelp();
-    controller->onPlayerHelp({7, 4});
-    controller->tick(1.0);
-    ASSERT_EQ(controller->mode(), Mode::AwaitingPlayer);
+TEST_F(BattleControllerTest, PlayerHelpCountsDownAndArmingStopsAtZero) {
+    start({shot(9, 0), shot(9, 1), shot(9, 2)});
+    const Coord centres[] = {{7, 1}, {7, 4}, {7, 7}};
+    for (int i = 0; i < kHelpUsesPerGame; ++i) {
+        ASSERT_TRUE(controller->playerHelpAvailable());
+        controller->armHelp();
+        ASSERT_EQ(controller->onPlayerHelp(centres[i]).status, ActionStatus::Applied);
+        EXPECT_EQ(controller->playerHelpUsesLeft(), kHelpUsesPerGame - 1 - i);
+        controller->tick(1.0); // computer misses, back to the player
+        ASSERT_EQ(controller->mode(), Mode::AwaitingPlayer);
+    }
+    EXPECT_FALSE(controller->playerHelpAvailable());
     controller->armHelp();
     EXPECT_EQ(controller->mode(), Mode::AwaitingPlayer);
+}
+
+TEST_F(BattleControllerTest, HelpCanBeArmedForTheExtraShotAfterAHit) {
+    start({shot(9, 9)});
+    ASSERT_EQ(controller->onPlayerFire({0, 0}).status, ActionStatus::Applied); // hit
+    ASSERT_EQ(controller->mode(), Mode::AwaitingPlayer);
+    controller->armHelp();
+    ASSERT_EQ(controller->mode(), Mode::PlayerHelpTargeting);
+    EXPECT_EQ(controller->onPlayerHelp({7, 4}).status, ActionStatus::Applied);
+    EXPECT_EQ(controller->mode(), Mode::ComputerActing);
+    EXPECT_EQ(controller->playerHelpUsesLeft(), kHelpUsesPerGame - 1);
+}
+
+TEST_F(BattleControllerTest, ComputerHelpCounterIsShownOnlyOnHard) {
+    for (const Difficulty d : {Difficulty::Easy, Difficulty::Medium, Difficulty::Hard}) {
+        start({}, d);
+        EXPECT_EQ(controller->showComputerHelpCounter(), d == Difficulty::Hard);
+        EXPECT_EQ(controller->computerHelpUsesLeft(), kHelpUsesPerGame);
+    }
+}
+
+TEST_F(BattleControllerTest, HelpChangesArriveAsOneBatchWithMarkingLast) {
+    start({});
+    controller->armHelp();
+    // Sinks the 1-cell ship at (4,5); its diagonal neighbours get Marked after the cross.
+    const ActionFeedback feedback = controller->onPlayerHelp({4, 5});
+    ASSERT_EQ(feedback.status, ActionStatus::Applied);
+    std::set<std::pair<int, int>> crossSeen;
+    bool markingStarted = false;
+    int marked = 0;
+    for (const CellChange& change : feedback.changes) {
+        if (change.now == Knowledge::Marked) {
+            markingStarted = true;
+            ++marked;
+        } else {
+            EXPECT_FALSE(markingStarted) << "cross results must come before the marking";
+            crossSeen.insert({change.coord.row, change.coord.col});
+        }
+    }
+    EXPECT_EQ(crossSeen, (std::set<std::pair<int, int>>{{4, 5}, {3, 5}, {5, 5}, {4, 4}, {4, 6}}));
+    EXPECT_GT(marked, 0);
 }
 
 TEST_F(BattleControllerTest, WinningHelpEndsTheGame) {
@@ -212,10 +263,20 @@ TEST_F(BattleControllerTest, ComputerHelpIsAppliedAndPassesTheTurn) {
     EXPECT_CALL(audio, onHelp());
     controller->onPlayerFire({9, 9});
     const auto changes = controller->tick(1.0);
-    EXPECT_EQ(changes.size(), 5u); // a full cross of misses on the player's board
-    EXPECT_FALSE(session->helpAvailable(Side::Computer));
+    EXPECT_EQ(changes.size(), 5u); // a full cross of misses on the player's board, in one batch
+    EXPECT_EQ(controller->computerHelpUsesLeft(), kHelpUsesPerGame - 1);
+    EXPECT_EQ(controller->computerHelpUsesLeft(), session->helpUsesLeft(Side::Computer));
     EXPECT_EQ(controller->mode(), Mode::AwaitingPlayer);
-    EXPECT_TRUE(strategy->lastHelpAvailable);
+    EXPECT_EQ(strategy->lastHelpUsesLeft, kHelpUsesPerGame);
+}
+
+TEST_F(BattleControllerTest, StrategyIsToldHowManyHelpUsesTheComputerHasLeft) {
+    start({help(7, 4), shot(9, 9)}, Difficulty::Hard);
+    controller->onPlayerFire({9, 9});
+    controller->tick(1.0); // computer Help: 3 -> 2
+    controller->onPlayerFire({9, 8});
+    controller->tick(1.0);
+    EXPECT_EQ(strategy->lastHelpUsesLeft, kHelpUsesPerGame - 1);
 }
 
 TEST_F(BattleControllerTest, ExitRequestFreezesTheBattleUntilCancelled) {

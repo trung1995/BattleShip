@@ -19,7 +19,7 @@ Coord randomUnknownCell(const ITargetView& view, IRandom& rng) {
 }
 
 AiAction RandomStrategy::choose(const ITargetView& view, int /*turnIndex*/,
-                                bool /*firstActionOfTurn*/, bool /*helpAvailable*/, IRandom& rng) {
+                                bool /*firstActionOfTurn*/, int /*helpUsesLeft*/, IRandom& rng) {
     return {AiAction::Kind::Shot, randomUnknownCell(view, rng)};
 }
 

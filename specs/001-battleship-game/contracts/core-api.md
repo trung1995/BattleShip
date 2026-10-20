@@ -42,6 +42,7 @@ struct ShipPlacement { Coord origin; int length; Orientation orientation;
                        std::vector<Coord> cells() const; };
 using ShipId = int;                                      // 0..9
 constexpr int kBoardSize = 10;
+constexpr int kHelpUsesPerGame = 3;                      // FR-026
 const std::array<int, 10>& fleetSpec();                  // {4,3,3,2,2,2,1,1,1,1}
 
 enum class PlacementError { None, OutOfBounds, Overlaps, Touches, ShipIdOutOfRange };
@@ -123,7 +124,8 @@ public:
     HelpOutcome useHelp(Side user, Coord centre);
     // Queries
     Phase phase() const;  Side currentTurn() const;  Side winner() const;  // winner(): pre phase==Finished
-    bool helpAvailable(Side) const;
+    int  helpUsesLeft(Side) const;                       // 0..kHelpUsesPerGame (FR-026, FR-032)
+    bool helpAvailable(Side) const;                      // helpUsesLeft(side) > 0
     int turnsTaken(Side) const;                          // passes-of-turn count (FR-035)
     const ITargetView& viewOf(Side targetBoardOwner) const;   // public projection
     const Fleet& ownFleet(Side) const;                   // for rendering one's own board only
@@ -149,8 +151,9 @@ When applied:
 
 ### `useHelp` behaviour
 
-The wrong-phase, wrong-turn and off-board checks are the same as for `fire`. In addition:
-- If the help was already used: `RejectedAlreadyUsed` (FR-026).
+The wrong-phase, wrong-turn and off-board checks are the same as for `fire`. Help is accepted on
+the first action of a turn and on any extra shot after a hit (FR-027). In addition:
+- If `helpUsesLeft(user) == 0`: `RejectedAlreadyUsed` (all three uses spent, FR-026).
 - If every on-board cross cell is already fired upon: `RejectedNoEffect`, and the help is
   **not** consumed (FR-029, Edge Cases).
 
@@ -158,7 +161,9 @@ When applied:
 1. Untouched on-board cross cells are resolved in the order centre, up, down, left, right
    (FR-027, FR-028).
 2. Marking around sunk ships happens after all of them are resolved.
-3. The help is consumed and the turn passes (FR-030), unless the game is over (FR-031).
+3. `helpUsesLeft(user)` decreases by one and the turn passes (FR-030), unless the game is over
+   (FR-031). The full `changes` list is returned at once so the view renders it as one batch
+   (FR-048).
 
 ### `viewOf(side)` guarantee
 
@@ -176,16 +181,28 @@ public:
     // Called once per computer action. firstActionOfTurn is true on the first action after the turn passed.
     // turnIndex is turnsTaken(Computer). Must return a legal action for the given view.
     virtual AiAction choose(const ITargetView& view, int turnIndex, bool firstActionOfTurn,
-                            bool helpAvailable, IRandom& rng) = 0;
+                            int helpUsesLeft, IRandom& rng) = 0;
 };
 class RandomStrategy;       // Easy    — FR-033
 class HuntTargetStrategy;   // Medium  — FR-034 (line-following, research R8)
-class HardStrategy;         // Hard    — FR-035; wraps HuntTargetStrategy + HelpPlanner(target turn 1..20)
+class HardStrategy;         // Hard    — FR-035; wraps HuntTargetStrategy + HelpPlanner
+
+class HelpPlanner {         // FR-035, research R8
+public:
+    explicit HelpPlanner(IRandom&);                       // draws kHelpUsesPerGame distinct turns in 1..20
+    const std::vector<int>& targetTurns() const;          // sorted ascending
+    bool shouldUse(int turnIndex, bool firstActionOfTurn, int helpUsesLeft, bool woundedShip) const;
+};
 
 std::unique_ptr<ITargetingStrategy> makeStrategy(Difficulty, IRandom&);   // factory
 ```
 
 - **Contract (Liskov)**: every strategy MUST return a `Shot` at an `Unknown` cell, or a `Help`
-  whose cross contains at least one `Unknown` cell, and only when `helpAvailable` is true.
+  whose cross contains at least one `Unknown` cell, and only when `helpUsesLeft > 0`.
   Easy and Medium MUST never return `Help` (FR-036). This is checked by one typed test suite
-  run against all three strategies.
+  run against all three strategies, which also checks Hard never returns more than three Helps
+  per game.
+- **`HelpPlanner::shouldUse`** is true only when `firstActionOfTurn`, `helpUsesLeft > 0`,
+  `!woundedShip`, and `count(targetTurns ≤ turnIndex) > kHelpUsesPerGame − helpUsesLeft`
+  (at least one scheduled use is due). The three turns are drawn with a partial Fisher–Yates
+  over 1..20 through `IRandom::nextInt`, so the schedule is seed-deterministic.
