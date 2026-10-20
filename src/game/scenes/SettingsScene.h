@@ -37,6 +37,7 @@ private:
     void back();
 
     GameServices& services_;
+    cocos2d::Node* sheet_ = nullptr; // the tilted parchment; every control sits on it
     std::unique_ptr<bs::app::SettingsController> controller_;
     ToggleSwitch* sound_ = nullptr;
     ToggleSwitch* music_ = nullptr;

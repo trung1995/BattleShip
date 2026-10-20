@@ -6,9 +6,9 @@
 #include "nodes/Decor.h"
 
 namespace {
-constexpr float kMaxTextWidth = 720.0f;
+constexpr float kMaxTextWidth = 820.0f;
 constexpr float kPadX = 24.0f;
-constexpr float kPadY = 10.0f;
+constexpr float kPadY = 9.0f;
 } // namespace
 
 Toast* Toast::create(bs::app::ILocalizer& localizer, Tone tone) {
@@ -29,7 +29,6 @@ bool Toast::init() {
     plaque_ = decor::canvas();
     addChild(plaque_);
     label_ = LocalizedLabel::create(localizer_, nullptr, 19.0f);
-    label_->setTextColor(theme::kCream);
     label_->setMaxWidth(kMaxTextWidth);
     addChild(label_);
     setOpacity(0);
@@ -39,11 +38,30 @@ bool Toast::init() {
 void Toast::show(bs::app::TextKey key) {
     bs::app::ILocalizer* source = &localizer_;
     label_->setProvider([source, key] { return source->text(key); });
+    tone_ = baseTone_;
+    holding_ = false;
     redraw();
     stopAllActions();
     setOpacity(255);
     runAction(cocos2d::Sequence::create(cocos2d::DelayTime::create(1.6f),
                                         cocos2d::FadeOut::create(0.4f), nullptr));
+}
+
+void Toast::hold(LocalizedLabel::Provider provider, Tone tone) {
+    label_->setProvider(std::move(provider));
+    tone_ = tone;
+    holding_ = true;
+    redraw();
+    stopAllActions();
+    setOpacity(255);
+}
+
+void Toast::release() {
+    if (holding_) {
+        holding_ = false;
+        stopAllActions();
+        setOpacity(0);
+    }
 }
 
 void Toast::redraw() {
@@ -54,10 +72,26 @@ void Toast::redraw() {
     }
     const cocos2d::Rect box(-text.width / 2 - kPadX, -text.height / 2 - kPadY, text.width + kPadX * 2,
                             text.height + kPadY * 2);
-    decor::softShadow(plaque_, box, 4.0f, cocos2d::Vec2(0.0f, -8.0f), 24.0f, theme::rgba(0, 0, 0, 0.5f));
-    const decor::Poly shape = decor::roundedRect(box, 4.0f);
-    decor::fill(plaque_, shape, theme::rgba(0x2a, 0x1a, 0x10));
-    decor::stroke(plaque_, shape, 1.0f, tone_ == Tone::Error ? theme::kWax : theme::rgba(0x7a, 0x55, 0x30));
+    cocos2d::Color4F fill = theme::rgba(0x12, 0x0a, 0x07);
+    cocos2d::Color4F edge = theme::kTarEdge;
+    cocos2d::Color3B ink = theme::kBone;
+    float tilt = 0.0f;
+    if (tone_ == Tone::Error) {
+        fill = theme::rgba(0x1a, 0x07, 0x05);
+        edge = theme::kBlood;
+        ink = theme::rgb(0xf3, 0xe2, 0xc0);
+        tilt = -0.5f;
+        decor::softShadow(plaque_, box, 3.0f, cocos2d::Vec2::ZERO, 24.0f, theme::rgba(179, 36, 27, 0.35f));
+    } else if (tone_ == Tone::Gold) {
+        edge = theme::kGoldTarnish;
+        ink = theme::kGoldText;
+    }
+    setRotation(tilt);
+    decor::softShadow(plaque_, box, 3.0f, cocos2d::Vec2(0.0f, -8.0f), 24.0f, theme::rgba(0, 0, 0, 0.6f));
+    const decor::Poly shape = decor::roundedRect(box, 3.0f);
+    decor::fill(plaque_, shape, fill);
+    decor::stroke(plaque_, shape, 1.0f, edge);
+    label_->setTextColor(ink);
 }
 
 void Toast::onEnter() {

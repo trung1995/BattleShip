@@ -30,7 +30,7 @@ bool LocalizedLabel::initLabel(float fontSize, theme::Face face) {
     setAnchorPoint(cocos2d::Vec2::ANCHOR_MIDDLE);
     setCascadeOpacityEnabled(true);
     label_ = cocos2d::Label::createWithTTF("", theme::fontFile(face), fontSize);
-    label_->setTextColor(cocos2d::Color4B(theme::kLight));
+    label_->setTextColor(cocos2d::Color4B(theme::kBone));
     label_->setAlignment(cocos2d::TextHAlignment::CENTER);
     addChild(label_);
     refresh();

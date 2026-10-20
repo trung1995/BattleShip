@@ -16,7 +16,7 @@ using cocos2d::Vec2;
 namespace {
 
 // One level on the sheet: diamond pips that repeat the level without relying on text, its name
-// and a one-line description. Dark wood with a brass edge on hover.
+// and a one-line description. Tar with a blood-red edge and glow on hover.
 class DifficultyRow final : public cocos2d::Node {
 public:
     static DifficultyRow* create(bs::app::ILocalizer& localizer, TextKey name, TextKey description, int level,
@@ -31,8 +31,8 @@ public:
     }
 
 private:
-    static constexpr float kWidth = 504.0f;
-    static constexpr float kHeight = 77.0f;
+    static constexpr float kWidth = 560.0f;
+    static constexpr float kHeight = 81.0f;
 
     DifficultyRow(int level, std::function<void()> onClick) : level_(level), onClick_(std::move(onClick)) {}
 
@@ -48,12 +48,12 @@ private:
         name_ = LocalizedLabel::forKey(localizer, name, 25.0f, theme::Face::Caps);
         name_->setAnchorPoint(Vec2::ANCHOR_MIDDLE_LEFT);
         name_->setMaxWidth(kWidth - textX - 18.0f);
-        name_->setPosition(textX, 50.0f);
+        name_->setPosition(textX, 52.0f);
         addChild(name_);
         description_ = LocalizedLabel::forKey(localizer, description, 18.0f, theme::Face::Italic);
         description_->setAnchorPoint(Vec2::ANCHOR_MIDDLE_LEFT);
         description_->setMaxWidth(kWidth - textX - 18.0f);
-        description_->setPosition(textX, 24.0f);
+        description_->setPosition(textX, 25.0f);
         addChild(description_);
         redraw();
 
@@ -83,14 +83,15 @@ private:
     void redraw() {
         background_->clear();
         const cocos2d::Rect box(0.0f, 0.0f, kWidth, kHeight);
-        const decor::Poly shape = decor::roundedRect(box, 4.0f);
+        const decor::Poly shape = decor::roundedRect(box, 3.0f);
         if (hovered_) {
-            decor::fill(background_, decor::roundedRect(cocos2d::Rect(-3.0f, -3.0f, kWidth + 6.0f, kHeight + 6.0f), 7.0f),
-                        theme::rgba(224, 176, 78, 0.3f));
-            decor::fill(background_, shape, theme::rgba(0x3b, 0x26, 0x15));
-            decor::stroke(background_, shape, 1.0f, theme::kBrassDeep);
+            decor::softShadow(background_, box, 3.0f, Vec2::ZERO, 24.0f, theme::rgba(179, 36, 27, 0.4f));
+            decor::fill(background_, decor::roundedRect(cocos2d::Rect(-3.0f, -3.0f, kWidth + 6.0f, kHeight + 6.0f), 6.0f),
+                        theme::rgba(179, 36, 27, 0.35f));
+            decor::fill(background_, shape, theme::kTar);
+            decor::stroke(background_, shape, 1.0f, theme::kBlood);
         } else {
-            decor::fill(background_, shape, theme::rgba(255, 248, 225, 0.35f));
+            decor::fill(background_, shape, theme::rgba(255, 248, 225, 0.3f));
             decor::stroke(background_, shape, 1.0f, theme::kParchmentRule);
         }
         for (int i = 0; i < 3; ++i) {
@@ -98,12 +99,12 @@ private:
             const Vec2 diamond[] = {c + Vec2(0.0f, 8.5f), c + Vec2(8.5f, 0.0f), c + Vec2(0.0f, -8.5f),
                                     c + Vec2(-8.5f, 0.0f)};
             if (i < level_) {
-                background_->drawSolidPoly(diamond, 4, theme::kWax);
+                background_->drawSolidPoly(diamond, 4, theme::kBlood);
             }
-            background_->drawPoly(diamond, 4, true, theme::rgba(0x6b, 0x4a, 0x22));
+            background_->drawPoly(diamond, 4, true, theme::kBloodDark);
         }
-        name_->setTextColor(hovered_ ? theme::kCream : theme::kInk);
-        description_->setTextColor(hovered_ ? theme::rgb(0xcd, 0xb9, 0x8e) : theme::kInkFaded);
+        name_->setTextColor(hovered_ ? theme::rgb(0xf3, 0xe2, 0xc0) : theme::kInk);
+        description_->setTextColor(hovered_ ? theme::rgb(0xc4, 0xb0, 0x8a) : theme::kInkBrown);
     }
 
     int level_;
@@ -127,21 +128,26 @@ DifficultyOverlay* DifficultyOverlay::create(GameServices& services) {
 }
 
 bool DifficultyOverlay::init() {
-    if (!LayerColor::initWithColor(cocos2d::Color4B(10, 6, 3, 184))) {
+    if (!LayerColor::initWithColor(cocos2d::Color4B(4, 5, 6, 204))) {
         return false;
     }
     auto& loc = services_.localizer();
     GameServices* services = &services_;
 
-    auto sheet = decor::canvas();
-    decor::panel(sheet, cocos2d::Rect(340, 120, 600, 480), 12.0f, decor::woodPanel());
+    // A torn sheet, tilted a little; everything on it tilts with it.
+    auto sheet = cocos2d::Node::create();
+    sheet->setPosition(640, 360);
+    sheet->setRotation(-0.6f);
     addChild(sheet);
+    auto paper = decor::canvas();
+    decor::tornSheet(paper, cocos2d::Rect(-320, -238, 640, 476), theme::kParchment, theme::kParchmentBurn);
+    sheet->addChild(paper);
 
     auto title = LocalizedLabel::forKey(loc, TextKey::DifficultyTitle, 38.0f, theme::Face::CapsHeavy);
     title->setTextColor(theme::kInk);
-    title->setMaxWidth(520.0f);
-    title->setPosition(640, 535);
-    addChild(title);
+    title->setMaxWidth(560.0f);
+    title->setPosition(0, 181);
+    sheet->addChild(title);
 
     const struct {
         TextKey name;
@@ -149,17 +155,17 @@ bool DifficultyOverlay::init() {
         Difficulty difficulty;
         int level;
         float y;
-    } levels[] = {{TextKey::DifficultyEasy, TextKey::DifficultyEasyDesc, Difficulty::Easy, 1, 453.0f},
-                  {TextKey::DifficultyMedium, TextKey::DifficultyMediumDesc, Difficulty::Medium, 2, 362.0f},
-                  {TextKey::DifficultyHard, TextKey::DifficultyHardDesc, Difficulty::Hard, 3, 271.0f}};
+    } levels[] = {{TextKey::DifficultyEasy, TextKey::DifficultyEasyDesc, Difficulty::Easy, 1, 97.0f},
+                  {TextKey::DifficultyMedium, TextKey::DifficultyMediumDesc, Difficulty::Medium, 2, 2.0f},
+                  {TextKey::DifficultyHard, TextKey::DifficultyHardDesc, Difficulty::Hard, 3, -93.0f}};
     for (const auto& level : levels) {
         const Difficulty difficulty = level.difficulty;
         auto row = DifficultyRow::create(loc, level.name, level.description, level.level, [services, difficulty] {
             services->audio().onClick();
             services->navigator().showPlacement(difficulty);
         });
-        row->setPosition(640, level.y);
-        addChild(row);
+        row->setPosition(0, level.y);
+        sheet->addChild(row);
     }
 
     auto back = TextButton::forKey(
@@ -169,8 +175,8 @@ bool DifficultyOverlay::init() {
             removeFromParent();
         },
         TextButton::Style::Secondary, 21.0f);
-    back->setPosition(640, 186);
-    addChild(back);
+    back->setPosition(0, -180);
+    sheet->addChild(back);
 
     auto blocker = cocos2d::EventListenerTouchOneByOne::create();
     blocker->setSwallowTouches(true);

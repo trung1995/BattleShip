@@ -1104,6 +1104,32 @@ green.
 
 ---
 
+## Phase 11: Redesign v2 "Blood & Black Water" (2026-10-20)
+
+**Purpose**: apply the mockup `Battleship Pirate Mockups v2` (claude.ai/design project
+"Battleship pirate redesign") to every screen. Rendering only, except the two app-layer
+additions, which were written test-first.
+
+- [X] T130 [US1] Extend `tests/app/BattleControllerTest.cpp` (RED first): `TurnIndicator.extraShot`
+  after a hit and while targeting Help, cleared when the turn passes; `computerHelpReport()` with
+  the cross cells, hits and misses; it fades after `kComputerHelpShowSeconds`, is frozen during
+  the exit prompt, and clears on the player's next action; `ActionFeedback::helpCells`.
+- [X] T131 [US1] Implement them in `src/app/include/bs/app/BattleController.h` and
+  `src/app/src/BattleController.cpp`. This makes T130 pass.
+- [X] T132 [US4] Strings in `TextKeys.h` and all three `.lang` files (see
+  [contracts/localization.md](contracts/localization.md)); `battle.computer_help` removed.
+- [X] T133 Fonts: Playfair Display SC Bold/Black (OFL) replace Alegreya SC; glyph coverage
+  checked for every string in en/ru/vi; licence in `Resources/fonts/OFL-PlayfairDisplaySC.txt`.
+- [X] T134 Theme and nodes: `Theme.h` palette, `Decor` (storm, rain sea, torn sheet, timber
+  frame, gold frame, emblems, pips), `TextButton`, `Banner`, `Toast` (hold/release), `ToggleSwitch`,
+  `Hull`, `BoardNode` (marks, strike), `HelpPreviewNode`, `DockNode` (placed counter).
+- [X] T135 Scenes: menu, difficulty, settings (name hint), placement (missing note), battle
+  (Help column, computer counter, banners, hint bar, blood sky), leave dialog, game over.
+- [X] T136 Developer screenshot tour `src/game/tools/ScreenshotTour.{h,cpp}` behind
+  `BS_SCREENSHOTS`; reviewed all 30 shots (10 states × en/ru/vi) against the mockup on macOS.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

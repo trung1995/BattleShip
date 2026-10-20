@@ -2,7 +2,7 @@
 
 #include "cocos2d.h"
 
-// A wooden hull with a rounded bow and brass rivets, one per deck. Shared by the boards, the
+// A tar-black hull with a rounded bow and gold rivets, one per deck. Shared by the boards, the
 // dock and the dragged ship so a ship looks the same everywhere.
 namespace hull {
 

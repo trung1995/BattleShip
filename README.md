@@ -38,6 +38,8 @@ all three languages is in `Resources/i18n/`. The design documents are in
   current toolchains are in `third_party/patches/` and are applied automatically.
 - [GoogleTest 1.14.0](https://github.com/google/googletest) (BSD-3-Clause), fetched at build
   time for the tests.
-- [Alegreya and Alegreya SC](https://github.com/huertatipografica/Alegreya) (SIL Open Font
-  License 1.1); see `Resources/fonts/OFL.txt`.
+- [Alegreya](https://github.com/huertatipografica/Alegreya) (SIL Open Font License 1.1); see
+  `Resources/fonts/OFL.txt`.
+- [Playfair Display SC](https://github.com/clauseggers/Playfair-Display) (SIL Open Font
+  License 1.1); see `Resources/fonts/OFL-PlayfairDisplaySC.txt`.
 - Sound effects and music are generated placeholders (CC0); see `Resources/audio/LICENSES.md`.

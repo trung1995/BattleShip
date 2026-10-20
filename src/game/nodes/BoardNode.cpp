@@ -39,20 +39,19 @@ bool BoardNode::init() {
     addChild(frame_);
     draw_ = decor::canvas();
     addChild(draw_);
+    blast_ = decor::canvas();
+    addChild(blast_, 2);
     drawFrame();
     redraw();
     return true;
 }
 
-// The wooden frame, the parchment and both axes, numbered 1-10: numerals read the same in
-// every language (ui-screens.md).
+// The timber frame, the scorched parchment and both axes, numbered 1-10: numerals read the same
+// in every language (ui-screens.md).
 void BoardNode::drawFrame() {
     const float side = cellSize_ * kBoardSize;
     const Rect outer(-kFrameLeft, -kFrameBottom, side + kFrameLeft + kFrameRight, side + kFrameBottom + kFrameTop);
-    decor::softShadow(frame_, outer, 6.0f, Vec2(0.0f, -18.0f), 40.0f, theme::rgba(0, 0, 0, 0.55f));
-    decor::panel(frame_, outer, 10.0f, decor::woodPanel(), false, 26.0f);
-    frame_->drawSolidRect(Vec2(outer.getMinX() + 3.0f, outer.getMaxY() - 4.0f),
-                          Vec2(outer.getMaxX() - 3.0f, outer.getMaxY() - 2.0f), theme::rgba(0x7a, 0x55, 0x30));
+    decor::timberFrame(frame_, outer, 10.0f, true);
     for (int i = 0; i < kBoardSize; ++i) {
         const std::string text = std::to_string(i + 1);
         auto column = cocos2d::Label::createWithTTF(text, theme::fontFile(theme::Face::Caps), 14.0f);
@@ -235,7 +234,7 @@ void BoardNode::drawPreview() {
             decor::fill(draw_, shape, theme::kPreviewIllegalWash);
             decor::hatch(draw_, shape, theme::kPreviewIllegal, 8.0f, 4.0f);
             decor::stroke(draw_, decor::roundedRect(Rect(o.x + 0.75f, o.y + 0.75f, cellSize_ - 2.5f, cellSize_ - 2.5f), 0.0f),
-                          1.5f, theme::kWax);
+                          1.5f, theme::kBloodDeep);
         }
     }
 }
@@ -245,10 +244,48 @@ void BoardNode::drawHover() {
         return;
     }
     const Vec2 o = cellOrigin(hover_);
-    if (knowledgeAt(hover_) == Knowledge::Unknown) {
+    if (knowledgeAt(hover_) == Knowledge::Unknown) { // a red target frame in enemy waters
         draw_->drawSolidRect(o, o + Vec2(cellSize_ - 1.0f, cellSize_ - 1.0f), theme::kHoverWash);
         decor::stroke(draw_, decor::roundedRect(Rect(o.x + 1.0f, o.y + 1.0f, cellSize_ - 3.0f, cellSize_ - 3.0f), 0.0f),
-                      2.0f, theme::kWax);
+                      2.0f, theme::kBlood);
+    }
+}
+
+void BoardNode::strike(const std::vector<Coord>& cells) {
+    constexpr float kDuration = 0.45f; // under 0.5 s, so the next computer shot never waits on it
+    strike_ = cells;
+    strikeAge_ = 0.0f;
+    drawStrike(1.0f);
+    schedule(
+        [this](float dt) {
+            strikeAge_ += dt;
+            const float left = 1.0f - strikeAge_ / kDuration;
+            drawStrike(left);
+            if (left <= 0.0f) {
+                unschedule("strike");
+            }
+        },
+        "strike");
+}
+
+// An orange flare with an ember edge on each struck cell.
+void BoardNode::drawStrike(float strength) {
+    blast_->clear();
+    if (strength <= 0.0f) {
+        return;
+    }
+    const auto fade = [strength](const cocos2d::Color4F& c) { return cocos2d::Color4F(c.r, c.g, c.b, c.a * strength); };
+    for (const Coord c : strike_) {
+        if (!c.isOnBoard()) {
+            continue;
+        }
+        const Vec2 o = cellOrigin(c);
+        const Vec2 centre = o + Vec2((cellSize_ - 1.0f) / 2, (cellSize_ - 1.0f) / 2);
+        blast_->drawSolidRect(o, o + Vec2(cellSize_ - 1.0f, cellSize_ - 1.0f), fade(theme::kBlastRim));
+        blast_->drawSolidCircle(centre, cellSize_ * 0.42f, 0.0f, 24, fade(theme::rgba(255, 120, 50, 0.55f)));
+        blast_->drawSolidCircle(centre, cellSize_ * 0.28f, 0.0f, 24, fade(theme::kBlastCore));
+        decor::stroke(blast_, decor::roundedRect(Rect(o.x + 0.75f, o.y + 0.75f, cellSize_ - 2.5f, cellSize_ - 2.5f), 0.0f),
+                      1.5f, fade(theme::kEmber));
     }
 }
 
@@ -258,23 +295,24 @@ void BoardNode::drawMark(Coord cell, Knowledge knowledge) {
     switch (knowledge) {
     case Knowledge::Unknown:
         break;
-    case Knowledge::Miss: // an ink ring: a splash in empty water
-        draw_->drawSolidCircle(centre, 7.0f, 0.0f, 24, theme::kMissWash);
+    case Knowledge::Miss: // a dark-teal ink ring: a splash in empty water
+        draw_->drawSolidCircle(centre, 8.0f, 0.0f, 24, theme::kMissWash);
         decor::ring(draw_, centre, 7.0f, 2.0f, theme::kMissInk);
         break;
-    case Knowledge::Marked: // a small faded dot around wrecks, distinct from a miss
-        draw_->drawSolidCircle(centre, 3.0f, 0.0f, 12, theme::kMarkedDot);
+    case Knowledge::Marked: // a tiny faded dot next to a wreck, never mistaken for a miss
+        draw_->drawSolidCircle(centre, 2.5f, 0.0f, 12, theme::kMarkedDot);
         break;
-    case Knowledge::Hit: { // a red wax seal with a cross
-        const Rect seal(centre.x - 15.0f, centre.y - 15.0f, 30.0f, 30.0f);
-        const decor::Poly shape = decor::roundedRect(seal, 4.0f);
-        decor::fill(draw_, shape, theme::kHitSeal);
-        decor::stroke(draw_, shape, 1.0f, theme::kHitSealEdge);
-        decor::crossMark(draw_, centre, 5.5f, 2.4f, theme::kHitCross);
+    case Knowledge::Hit: { // a blood splatter, slightly askew, with a cross
+        decor::fill(draw_, decor::ellipse(centre, 18.0f, 17.0f, 8.0f), theme::rgba(179, 36, 27, 0.22f));
+        decor::fill(draw_, decor::ellipse(centre, 15.5f, 14.5f, 8.0f), theme::kHitEdge);
+        decor::fill(draw_, decor::ellipse(centre, 14.5f, 13.5f, 8.0f), theme::kBloodDeep);
+        decor::fill(draw_, decor::ellipse(centre + Vec2(-1.5f, 1.5f), 11.0f, 10.0f, 8.0f), theme::kBlood);
+        decor::fill(draw_, decor::ellipse(centre + Vec2(-3.0f, 3.0f), 6.5f, 6.0f, 8.0f), theme::kBloodBright);
+        decor::crossMark(draw_, centre, 5.5f, 2.6f, theme::kHitCross);
         break;
     }
-    case Knowledge::Sunk:
-        decor::crossMark(draw_, centre, 5.5f, 2.4f, theme::kSunkCross);
+    case Knowledge::Sunk: // a red cross over the charred wreck
+        decor::crossMark(draw_, centre, 6.0f, 2.8f, theme::kSunkCross);
         break;
     }
     if (hovering_ && cell == hover_ && knowledge != Knowledge::Unknown) {

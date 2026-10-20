@@ -5,11 +5,12 @@
 #include "cocos2d.h"
 #include "nodes/LocalizedLabel.h"
 
-// The turn banner: a plaque sized to its localized text. Parchment with a brass edge for the
-// player's turn, red wax for the computer's (FR-024).
+// The turn banner: a plaque sized to its localized text, tilted a little (FR-024). Parchment
+// for the player's turn, glowing gold for an extra shot after a hit, blood-red wax while the
+// computer fires, and a burning red when the computer unleashes Help.
 class Banner final : public cocos2d::Node {
 public:
-    enum class Style { Parchment, Wax };
+    enum class Style { Parchment, Gold, Wax, Blood };
 
     static Banner* create(bs::app::ILocalizer& localizer, LocalizedLabel::Provider provider);
 

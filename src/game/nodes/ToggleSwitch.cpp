@@ -51,18 +51,19 @@ void ToggleSwitch::setOn(bool on) {
     }
 }
 
+// On: blood-red wax with a bone knob on the right. Off: dark tar with a faded knob on the left.
 void ToggleSwitch::redraw() {
     draw_->clear();
     const decor::Poly pill = decor::roundedRect(cocos2d::Rect(0.0f, 0.0f, kWidth, kHeight), kHeight / 2);
-    decor::fill(draw_, pill, on_ ? theme::kBrassDeep : theme::rgba(0x5a, 0x3e, 0x26));
+    decor::fill(draw_, pill, on_ ? theme::kBlood : theme::rgba(0x2a, 0x1a, 0x12));
     decor::fill(draw_, decor::roundedRect(cocos2d::Rect(2.0f, kHeight - 7.0f, kWidth - 4.0f, 5.0f), 2.5f),
-                on_ ? theme::rgba(60, 35, 10, 0.25f) : theme::rgba(0, 0, 0, 0.3f)); // inset shade
-    const cocos2d::Color4F edge = on_ ? theme::rgba(0x8a, 0x6a, 0x2a) : theme::kHullEdge;
+                on_ ? theme::rgba(40, 5, 0, 0.35f) : theme::rgba(0, 0, 0, 0.45f)); // inset shade
+    const cocos2d::Color4F edge = on_ ? theme::kBloodDark : theme::rgba(0x12, 0x08, 0x06);
     decor::stroke(draw_, pill, 1.0f, edge);
     const cocos2d::Vec2 knob(on_ ? kWidth - 3.0f - kKnob : 3.0f + kKnob, kHeight / 2);
     if (on_) {
-        draw_->drawSolidCircle(knob + cocos2d::Vec2(0.0f, -2.0f), kKnob, 0.0f, 24, theme::rgba(0, 0, 0, 0.3f));
+        draw_->drawSolidCircle(knob + cocos2d::Vec2(0.0f, -2.0f), kKnob, 0.0f, 24, theme::rgba(0, 0, 0, 0.4f));
     }
     draw_->drawSolidCircle(knob, kKnob + 1.0f, 0.0f, 24, edge);
-    draw_->drawSolidCircle(knob, kKnob, 0.0f, 24, on_ ? theme::rgba(0xf3, 0xe2, 0xb8) : theme::rgba(0xcd, 0xb9, 0x8e));
+    draw_->drawSolidCircle(knob, kKnob, 0.0f, 24, on_ ? theme::rgba(0xf3, 0xe2, 0xc0) : theme::rgba(0xa8, 0x98, 0x7a));
 }

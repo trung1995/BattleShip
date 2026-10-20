@@ -1,8 +1,11 @@
 #include "AppDelegate.h"
 
+#include <cstdlib>
+
 #include "GameServices.h"
 #include "bs/app/TextKeys.h"
 #include "audio/include/AudioEngine.h"
+#include "tools/ScreenshotTour.h"
 
 namespace {
 const cocos2d::Size kDesignSize(1280, 720);
@@ -31,6 +34,10 @@ bool AppDelegate::applicationDidFinishLaunching() {
     updateWindowTitle(); // the window was created untitled; the title is localized text
     services_->localizer().subscribe([this] { updateWindowTitle(); });
     services_->navigator().showMenu();
+    if (const char* folder = std::getenv("BS_SCREENSHOTS")) {
+        tour_ = std::make_unique<ScreenshotTour>(*services_, folder);
+        tour_->start();
+    }
     return true;
 }
 

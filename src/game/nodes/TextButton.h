@@ -5,17 +5,18 @@
 #include "cocos2d.h"
 #include "nodes/LocalizedLabel.h"
 
-// A button with a localized caption, drawn in one of the chart-table styles. Clicks arrive as
+// A button with a localized caption, drawn in one of the "Blood & Black Water" styles. Clicks arrive as
 // touches on desktop; hover and press states follow the mouse.
 class TextButton final : public cocos2d::Node {
 public:
     enum class Style {
-        Primary,     // brass: the main action on a screen
-        Secondary,   // dark wood
-        Destructive, // red sealing wax
-        HelpReady,   // brass with a cross icon
-        HelpArmed,   // red wax with a glowing brass cross: choosing the Help target
-        HelpUsed,    // tarred and dashed: Help already spent
+        Primary,     // blood-red wax: the main action on a screen
+        Secondary,   // tar
+        Safe,        // tarnished gold: the safe default in a dialog
+        Destructive, // blood-red wax: an action that throws something away
+        HelpReady,   // gold with a red cross icon
+        HelpArmed,   // blood red with a glowing gold cross: choosing the Help target
+        HelpUsed,    // spent tar with a dashed edge: no Help left
         SegmentOn,   // the chosen option in a segmented control
         SegmentOff,
     };

@@ -4,7 +4,7 @@
 
 #include "cocos2d.h"
 
-// Drawing helpers for the chart-table look: rounded and elliptical-cornered shapes, banded
+// Drawing helpers for the "Blood & Black Water" look: rounded and elliptical-cornered shapes, banded
 // gradients, hatching, soft shadows and parchment panels. Everything draws into a DrawNode, so
 // the engine needs no image assets. Pure drawing; no game logic.
 namespace decor {
@@ -60,27 +60,35 @@ void softShadow(cocos2d::DrawNode* draw, const cocos2d::Rect& rect, float radius
 void innerShadow(cocos2d::DrawNode* draw, const cocos2d::Rect& rect, float depth,
                  const cocos2d::Color4F& color);
 
-// The tarred-wood table: a radial glow centred at 50% / 40% from the top.
-void table(cocos2d::DrawNode* draw, const cocos2d::Size& size);
-// The menu's night sea: dark teal diagonal stripes.
-void nightSea(cocos2d::DrawNode* draw, const cocos2d::Size& size);
+// A storm sky: an elliptical glow of `light` at (`at.x`, `at.y`) as fractions of the size,
+// measured from the bottom-left, fading into `deep` by `reach` (0..1 of the farthest corner).
+void storm(cocos2d::DrawNode* draw, const cocos2d::Size& size, const cocos2d::Vec2& at,
+           const cocos2d::Color4F& light, const cocos2d::Color4F& deep, float reach = 0.62f);
+// The menu's rain-streaked night sea: dark teal diagonal stripes.
+void rainSea(cocos2d::DrawNode* draw, const cocos2d::Size& size);
 
-// Emblems drawn in place of artwork: a brass compass rose (menu), a gold star (victory) and a
-// broken mast (defeat).
-void compassRose(cocos2d::DrawNode* draw, const cocos2d::Vec2& centre, float radius);
-void victoryEmblem(cocos2d::DrawNode* draw, const cocos2d::Vec2& centre, float radius);
-void defeatEmblem(cocos2d::DrawNode* draw, const cocos2d::Vec2& centre, float radius);
+// A torn parchment sheet: ragged edges, a scorched inner burn and a heavy drop shadow. Draw it
+// into its own node and rotate that node a little; nothing in this look sits straight.
+void tornSheet(cocos2d::DrawNode* draw, const cocos2d::Rect& rect, const cocos2d::Color4F& paper,
+               const cocos2d::Color4F& burn, float burnDepth = 44.0f);
+// Scorched timber with a blood-red inlay (boards and the dock). `outer` includes the frame;
+// returns the parchment rect inside it.
+cocos2d::Rect timberFrame(cocos2d::DrawNode* draw, const cocos2d::Rect& outer, float frame = 10.0f,
+                          bool dropShadow = true);
+// The victory frame: tarnished gold with a bright outline and a glow. Returns the paper rect.
+cocos2d::Rect goldFrame(cocos2d::DrawNode* draw, const cocos2d::Rect& outer, float frame = 10.0f);
 
-struct PanelStyle {
-    cocos2d::Color4F frame;
-    cocos2d::Color4F frameEdge;
-    cocos2d::Color4F paper;
-    cocos2d::Color4F burn;
-    bool brassFrame = false; // a gold gradient frame with a bright outline (victory)
-};
-PanelStyle woodPanel();
-// A parchment sheet in a wooden frame. `outer` includes the frame; returns the parchment rect.
-cocos2d::Rect panel(cocos2d::DrawNode* draw, const cocos2d::Rect& outer, float frame,
-                    const PanelStyle& style, bool dropShadow = true, float burnDepth = 34.0f);
+// Emblems drawn in place of artwork: skull and crossed cutlasses (menu), a treasure chest
+// (victory) and Davy Jones' drowned skull (defeat).
+void skullAndCutlasses(cocos2d::DrawNode* draw, const cocos2d::Vec2& centre, float radius);
+void treasureChest(cocos2d::DrawNode* draw, const cocos2d::Vec2& centre, float radius);
+void drownedSkull(cocos2d::DrawNode* draw, const cocos2d::Vec2& centre, float radius);
+
+// A small filled ellipse, optionally rotated (pips, the hit splatter).
+Poly ellipse(const cocos2d::Vec2& centre, float rx, float ry, float rotationDegrees = 0.0f, int segments = 24);
+// A row of `total` round pips, `filled` of them lit, centred on `centre` (Help uses).
+void pips(cocos2d::DrawNode* draw, const cocos2d::Vec2& centre, int total, int filled, float diameter, float gap,
+          const cocos2d::Color4F& on, const cocos2d::Color4F& onEdge, const cocos2d::Color4F& offEdge,
+          const cocos2d::Color4F& glow);
 
 } // namespace decor

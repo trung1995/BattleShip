@@ -16,11 +16,12 @@
 using bs::app::Language;
 using bs::app::TextKey;
 
+// Coordinates are local to the sheet, whose centre sits at the middle of the screen.
 namespace {
-constexpr float kLeft = 342.0f;  // the parchment's content edges
-constexpr float kRight = 938.0f;
+constexpr float kLeft = -316.0f; // the parchment's content edges
+constexpr float kRight = 316.0f;
 constexpr std::size_t kNameLimit = 20;
-const cocos2d::Rect kField(kLeft, 214.0f, kRight - kLeft, 52.0f);
+const cocos2d::Rect kField(kLeft, -123.0f, kRight - kLeft, 52.0f);
 } // namespace
 
 SettingsScene* SettingsScene::create(GameServices& services) {
@@ -40,39 +41,45 @@ bool SettingsScene::init() {
     controller_ = std::make_unique<bs::app::SettingsController>(services_.settings(), services_.localizer(),
                                                                services_.audio());
     auto backdrop = decor::canvas();
-    decor::table(backdrop, cocos2d::Size(1280, 720));
-    decor::panel(backdrop, cocos2d::Rect(290, 92, 700, 536), 12.0f, decor::woodPanel());
-    for (const float y : {470.0f, 400.0f, 328.0f}) {
-        backdrop->drawSolidRect(cocos2d::Vec2(kLeft, y), cocos2d::Vec2(kRight, y + 1.0f), theme::kParchmentRule);
-    }
+    decor::storm(backdrop, cocos2d::Size(1280, 720), cocos2d::Vec2(0.3f, 1.0f), theme::kStormLight, theme::kStormDeep);
     addChild(backdrop);
+    sheet_ = cocos2d::Node::create();
+    sheet_->setPosition(640, 360);
+    sheet_->setRotation(0.4f);
+    addChild(sheet_);
+    auto paper = decor::canvas();
+    decor::tornSheet(paper, cocos2d::Rect(-360, -260, 720, 520), theme::kParchment, theme::kParchmentBurn);
+    for (const float y : {120.0f, 58.0f, -15.0f}) {
+        paper->drawSolidRect(cocos2d::Vec2(kLeft, y), cocos2d::Vec2(kRight, y + 1.0f), theme::kParchmentRule);
+    }
+    sheet_->addChild(paper);
     auto& loc = services_.localizer();
 
     auto title = LocalizedLabel::forKey(loc, TextKey::SettingsTitle, 40.0f, theme::Face::CapsHeavy);
     title->setTextColor(theme::kInk);
-    title->setMaxWidth(560.0f);
-    title->setPosition(640, 562);
-    addChild(title);
+    title->setMaxWidth(600.0f);
+    title->setPosition(0, 206);
+    sheet_->addChild(title);
 
-    sound_ = addToggleRow(TextKey::SettingsSound, 497.0f, &bs::app::ISettings::soundEnabled, [this] {
+    sound_ = addToggleRow(TextKey::SettingsSound, 149.0f, &bs::app::ISettings::soundEnabled, [this] {
         controller_->toggleSound();
         services_.audio().onClick();
         refresh();
     }, soundState_);
-    music_ = addToggleRow(TextKey::SettingsMusic, 427.0f, &bs::app::ISettings::musicEnabled, [this] {
+    music_ = addToggleRow(TextKey::SettingsMusic, 87.0f, &bs::app::ISettings::musicEnabled, [this] {
         services_.audio().onClick();
         controller_->toggleMusic();
         refresh();
     }, musicState_);
 
     // Language names are always shown in their own language (contracts/ui-screens.md).
-    addRowLabel(TextKey::SettingsLanguage, 355.0f);
+    addRowLabel(TextKey::SettingsLanguage, 20.0f);
     const float widths[] = {112.0f, 112.0f, 124.0f};
     const float groupLeft = kRight - (widths[0] + widths[1] + widths[2]);
     auto group = decor::canvas();
-    decor::stroke(group, decor::roundedRect(cocos2d::Rect(groupLeft - 0.5f, 334.5f, kRight - groupLeft + 1.0f, 41.0f), 4.0f),
-                  1.0f, theme::rgba(0x6b, 0x4a, 0x22));
-    addChild(group, 1);
+    decor::stroke(group, decor::roundedRect(cocos2d::Rect(groupLeft - 0.5f, -0.5f, kRight - groupLeft + 1.0f, 41.0f), 3.0f),
+                  1.0f, theme::rgba(0x3a, 0x1a, 0x12));
+    sheet_->addChild(group, 1);
     const auto languages = controller_->languages();
     float x = groupLeft;
     for (std::size_t i = 0; i < languages.size(); ++i) {
@@ -85,18 +92,33 @@ bool SettingsScene::init() {
                 refresh();
             },
             TextButton::Style::SegmentOff, 19.0f);
-        languageButtons_[i]->setPosition(x + widths[i] / 2, 355.0f);
-        addChild(languageButtons_[i]);
+        languageButtons_[i]->setPosition(x + widths[i] / 2, 20.0f);
+        sheet_->addChild(languageButtons_[i]);
         x += widths[i];
     }
 
-    addRowLabel(TextKey::SettingsPlayerName, 293.0f);
+    addRowLabel(TextKey::SettingsPlayerName, -48.0f);
     addNameField(kField.getMidY());
+
+    // Leaving the name empty sails under the default name of the current language (FR-041).
+    GameServices* services = &services_;
+    auto nameHint = LocalizedLabel::create(
+        loc,
+        [services] {
+            return services->localizer().format(TextKey::SettingsNameHint,
+                                                {{"name", services->localizer().text(TextKey::NamePlayerDefault)}});
+        },
+        17.0f, theme::Face::Italic);
+    nameHint->setTextColor(theme::kInkBrown);
+    nameHint->setMaxWidth(kRight - kLeft);
+    nameHint->setAnchorPoint(cocos2d::Vec2::ANCHOR_MIDDLE_LEFT);
+    nameHint->setPosition(kLeft, -142.0f);
+    sheet_->addChild(nameHint);
 
     auto backButton = TextButton::forKey(loc, TextKey::CommonBack, cocos2d::Size(200, 52), [this] { back(); },
                                          TextButton::Style::Secondary, 22.0f);
-    backButton->setPosition(640, 150);
-    addChild(backButton);
+    backButton->setPosition(0, -201);
+    sheet_->addChild(backButton);
 
     auto keys = cocos2d::EventListenerKeyboard::create();
     keys->onKeyReleased = [this](cocos2d::EventKeyboard::KeyCode code, cocos2d::Event*) {
@@ -119,7 +141,7 @@ void SettingsScene::addRowLabel(TextKey key, float y) {
     label->setMaxWidth(300.0f);
     label->setAnchorPoint(cocos2d::Vec2::ANCHOR_MIDDLE_LEFT);
     label->setPosition(kLeft, y);
-    addChild(label);
+    sheet_->addChild(label);
 }
 
 ToggleSwitch* SettingsScene::addToggleRow(TextKey key, float y, bool (bs::app::ISettings::*isOn)() const,
@@ -127,7 +149,7 @@ ToggleSwitch* SettingsScene::addToggleRow(TextKey key, float y, bool (bs::app::I
     addRowLabel(key, y);
     auto toggle = ToggleSwitch::create(std::move(onClick));
     toggle->setPosition(kRight - 34.0f, y);
-    addChild(toggle);
+    sheet_->addChild(toggle);
 
     GameServices* services = &services_;
     auto state = LocalizedLabel::create(
@@ -139,14 +161,14 @@ ToggleSwitch* SettingsScene::addToggleRow(TextKey key, float y, bool (bs::app::I
         18.0f, theme::Face::Caps);
     state->setAnchorPoint(cocos2d::Vec2::ANCHOR_MIDDLE_RIGHT);
     state->setPosition(kRight - 80.0f, y);
-    addChild(state);
+    sheet_->addChild(state);
     stateLabel = state;
     return toggle;
 }
 
 void SettingsScene::addNameField(float y) {
     nameFrame_ = decor::canvas();
-    addChild(nameFrame_);
+    sheet_->addChild(nameFrame_);
 
     name_ = cocos2d::ui::TextField::create("", theme::fontFile(theme::Face::Body), 23);
     name_->setAnchorPoint(cocos2d::Vec2::ANCHOR_MIDDLE_LEFT);
@@ -154,7 +176,7 @@ void SettingsScene::addNameField(float y) {
     name_->setTouchSize(cocos2d::Size(kField.size.width - 16.0f, kField.size.height));
     name_->setCursorEnabled(true);
     name_->setTextColor(cocos2d::Color4B(theme::kInk));
-    name_->setPlaceHolderColor(cocos2d::Color4B(0x8a, 0x73, 0x52, 255));
+    name_->setPlaceHolderColor(cocos2d::Color4B(0x7a, 0x5d, 0x3c, 255));
     name_->setString(services_.settings().storedPlayerName());
     name_->setPosition(cocos2d::Vec2(kLeft + 16.0f, y));
     name_->addEventListener([this](cocos2d::Ref*, cocos2d::ui::TextField::EventType type) {
@@ -176,32 +198,32 @@ void SettingsScene::addNameField(float y) {
         }
         drawNameField();
     });
-    addChild(name_, 1);
+    sheet_->addChild(name_, 1);
 
     nameCount_ = cocos2d::Label::createWithTTF("", theme::fontFile(theme::Face::Body), 15.0f);
-    nameCount_->setTextColor(cocos2d::Color4B(0x8a, 0x73, 0x52, 255));
+    nameCount_->setTextColor(cocos2d::Color4B(0x7a, 0x5d, 0x3c, 255));
     nameCount_->setAnchorPoint(cocos2d::Vec2::ANCHOR_MIDDLE_RIGHT);
     nameCount_->setPosition(kRight - 16.0f, y);
-    addChild(nameCount_, 1);
+    sheet_->addChild(nameCount_, 1);
     drawNameField();
 }
 
-// Parchment-white field; a brass ring while typing, with a live "n / 20" count.
+// Pale parchment field; a blood-red ring while typing, with a live "n / 20" count.
 void SettingsScene::drawNameField() {
     nameFrame_->clear();
-    const decor::Poly shape = decor::roundedRect(kField, 3.0f);
+    const decor::Poly shape = decor::roundedRect(kField, 2.0f);
     if (nameFocused_) {
         decor::fill(nameFrame_,
                     decor::roundedRect(cocos2d::Rect(kField.getMinX() - 3.0f, kField.getMinY() - 3.0f,
                                                      kField.size.width + 6.0f, kField.size.height + 6.0f),
-                                       6.0f),
-                    theme::rgba(201, 151, 63, 0.55f));
+                                       5.0f),
+                    theme::rgba(179, 36, 27, 0.5f));
     }
-    decor::fill(nameFrame_, shape, theme::rgba(0xf4, 0xe7, 0xc5));
+    decor::fill(nameFrame_, shape, theme::rgba(0xef, 0xe1, 0xc2));
     nameFrame_->drawSolidRect(cocos2d::Vec2(kField.getMinX() + 1.0f, kField.getMaxY() - 4.0f),
                               cocos2d::Vec2(kField.getMaxX() - 1.0f, kField.getMaxY() - 1.0f),
-                              theme::rgba(90, 60, 20, 0.12f));
-    decor::stroke(nameFrame_, shape, 1.0f, theme::rgba(0x6b, 0x4a, 0x22));
+                              theme::rgba(60, 30, 10, 0.18f));
+    decor::stroke(nameFrame_, shape, 1.0f, theme::rgba(0x3a, 0x1a, 0x12));
     nameCount_->setString(std::to_string(bs::app::codePointCount(name_->getString())) + " / " +
                           std::to_string(kNameLimit));
     nameCount_->setVisible(nameFocused_ || !name_->getString().empty());
@@ -219,7 +241,7 @@ void SettingsScene::refresh() {
                                                        {musicState_, services_.settings().musicEnabled()}};
     for (const auto& state : states) {
         state.first->refresh();
-        state.first->setTextColor(state.second ? theme::kInkBrown : theme::rgb(0x7a, 0x64, 0x47));
+        state.first->setTextColor(state.second ? theme::kInkRed : theme::kInkFaded);
     }
     const auto languages = controller_->languages();
     for (std::size_t i = 0; i < languages.size(); ++i) {

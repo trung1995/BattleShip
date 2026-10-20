@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <new>
+#include <string>
 
 #include "GameServices.h"
 #include "Theme.h"
@@ -50,48 +51,48 @@ bool PlacementScene::init() {
                                                                  services_.random());
 
     auto backdrop = decor::canvas();
-    decor::table(backdrop, cocos2d::Size(1280, 720));
+    decor::storm(backdrop, cocos2d::Size(1280, 720), cocos2d::Vec2(0.3f, 1.0f), theme::kStormLight, theme::kStormDeep);
     addChild(backdrop);
     auto& loc = services_.localizer();
 
     auto title = LocalizedLabel::forKey(loc, TextKey::PlacementTitle, 40.0f, theme::Face::CapsHeavy);
     title->setTextColor(theme::kTitle);
     title->setMaxWidth(760.0f);
-    title->setPosition(640, 670);
+    title->setPosition(640, 672);
     addChild(title);
     auto hint = LocalizedLabel::forKey(loc, TextKey::PlacementHint, 19.0f, theme::Face::Italic);
     hint->setTextColor(theme::kHint);
     hint->setMaxWidth(800.0f);
-    hint->setPosition(640, 624);
+    hint->setPosition(640, 625);
     addChild(hint);
 
     board_ = BoardNode::create(theme::kCellSize);
-    board_->setPosition(146, 174);
+    board_->setPosition(146, 182);
     board_->setFleet(&session_->playerFleet());
     addChild(board_);
 
     // Why the current drop is illegal: a red diamond and the reason, under the board.
     reasonMark_ = decor::canvas();
-    const cocos2d::Vec2 diamond[] = {cocos2d::Vec2(117, 131), cocos2d::Vec2(124, 124), cocos2d::Vec2(117, 117),
-                                     cocos2d::Vec2(110, 124)};
-    reasonMark_->drawSolidPoly(diamond, 4, theme::rgba(0xd0, 0x50, 0x3a));
+    const cocos2d::Vec2 diamond[] = {cocos2d::Vec2(117, 139), cocos2d::Vec2(124, 132), cocos2d::Vec2(117, 125),
+                                     cocos2d::Vec2(110, 132)};
+    reasonMark_->drawSolidPoly(diamond, 4, theme::kEmber);
     reasonMark_->setVisible(false);
     addChild(reasonMark_);
     reason_ = LocalizedLabel::create(loc, nullptr, 19.0f);
     reason_->setTextColor(theme::kWarning);
     reason_->setMaxWidth(400.0f);
     reason_->setAnchorPoint(cocos2d::Vec2::ANCHOR_MIDDLE_LEFT);
-    reason_->setPosition(134, 124);
+    reason_->setPosition(134, 132);
     addChild(reason_);
 
     dock_ = DockNode::create(loc, theme::kCellSize);
-    dock_->setPosition(640, 379);
+    dock_->setPosition(640, 387);
     addChild(dock_);
 
     const cocos2d::Size buttonSize(263, 58);
     auto rotateButton = TextButton::forKey(loc, TextKey::PlacementRotate, buttonSize, [this] { rotate(); },
                                            TextButton::Style::Secondary, 20.0f);
-    rotateButton->setPosition(771.5f, 271);
+    rotateButton->setPosition(771.5f, 281);
     addChild(rotateButton);
 
     auto remaining = TextButton::forKey(
@@ -104,7 +105,7 @@ bool PlacementScene::init() {
             refresh();
         },
         TextButton::Style::Secondary, 20.0f);
-    remaining->setPosition(1048.5f, 271);
+    remaining->setPosition(1048.5f, 281);
     addChild(remaining);
 
     auto autoAll = TextButton::forKey(
@@ -115,17 +116,30 @@ bool PlacementScene::init() {
             refresh();
         },
         TextButton::Style::Secondary, 20.0f);
-    autoAll->setPosition(771.5f, 199);
+    autoAll->setPosition(771.5f, 209);
     addChild(autoAll);
 
     start_ = TextButton::forKey(loc, TextKey::PlacementStart, buttonSize, [this] { startBattle(); },
                                 TextButton::Style::Primary, 20.0f);
-    start_->setPosition(1048.5f, 199);
+    start_->setPosition(1048.5f, 209);
     addChild(start_);
 
-    auto backButton = TextButton::forKey(loc, TextKey::CommonBack, cocos2d::Size(140, 46), [this] { back(); },
+    bs::app::PlacementController* controller = controller_.get();
+    bs::app::ILocalizer* source = &loc;
+    missing_ = LocalizedLabel::create(
+        loc,
+        [source, controller] {
+            return source->format(TextKey::PlacementMissing, {{"n", std::to_string(controller->dockShips().size())}});
+        },
+        17.0f, theme::Face::Italic);
+    missing_->setTextColor(theme::kWarning);
+    missing_->setMaxWidth(263.0f);
+    missing_->setPosition(1048.5f, 161);
+    addChild(missing_);
+
+    auto backButton = TextButton::forKey(loc, TextKey::CommonBack, cocos2d::Size(130, 46), [this] { back(); },
                                          TextButton::Style::Secondary, 20.0f);
-    backButton->setPosition(1178, 669);
+    backButton->setPosition(1183, 669);
     addChild(backButton);
 
     ghost_ = ShipNode::create(1, Orientation::Horizontal, theme::kCellSize, hull::State::Lifted);
@@ -227,7 +241,7 @@ void PlacementScene::onMouseMove(const cocos2d::Vec2& point) {
         showReason(preview.reason);
         const Coord bottomCell = vertical ? Coord{origin.row + length - 1, origin.col} : origin;
         ghost_->setPosition(board_->convertToWorldSpace(board_->cellOrigin(bottomCell)) + cocos2d::Vec2(-8, 12));
-        ghost_->setRotation(-3.0f);
+        ghost_->setRotation(-4.0f);
     } else {
         board_->clearPreview();
         showReason(PlacementError::None);
@@ -292,6 +306,8 @@ void PlacementScene::refresh() {
     board_->setSelectedShip(controller_->selectedShip());
     dock_->setShips(controller_->dockShips());
     start_->setLooksDisabled(!controller_->canStartBattle());
+    missing_->setVisible(!controller_->canStartBattle());
+    missing_->refresh();
 }
 
 void PlacementScene::startBattle() {

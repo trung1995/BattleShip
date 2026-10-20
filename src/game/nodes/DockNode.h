@@ -9,8 +9,8 @@
 class LocalizedLabel;
 class ShipNode;
 
-// The unplaced ships on a parchment sheet: a heading, then one slot per length (4, 3 / 2, 1)
-// with a "×N" count. It reports which ship a click picks; the placement controller decides what
+// The unplaced ships on a parchment sheet in a timber frame: a heading with a "placed / 10"
+// counter, then one slot per length (4, 3 / 2, 1) with a "×N" count. It reports which ship a click picks; the placement controller decides what
 // happens. The node's origin is the sheet's bottom-left corner, frame included.
 class DockNode final : public cocos2d::Node {
 public:
@@ -32,5 +32,6 @@ private:
     std::vector<bs::core::ShipId> unplaced_;
     ShipNode* shapes_[kSlots] = {};
     LocalizedLabel* counts_[kSlots] = {};
+    cocos2d::Label* progress_ = nullptr;
     int remaining_[kSlots] = {};
 };

@@ -18,11 +18,22 @@ struct ActionFeedback {
     TextKey message = TextKey::BattleRejectNotYourTurn; // valid when hasMessage
     bool hasMessage = false;
     std::vector<bs::core::CellChange> changes; // render these in the same frame (SC-009)
+    std::vector<bs::core::Coord> helpCells;    // an applied Help's cross, for the strike effect
 };
 
 struct TurnIndicator {
     bs::core::Side side = bs::core::Side::Player;
     bool gameOver = false;
+    bool extraShot = false;    // the player's turn continues after a hit
+    bool computerHelp = false; // the computer's Help was just applied and is still being shown
+};
+
+// The computer's most recent Help, shown for a moment after it lands.
+struct HelpReport {
+    bool active = false;
+    std::vector<bs::core::Coord> cells; // the cross, in resolution order
+    int hits = 0;
+    int misses = 0;
 };
 
 // The battle screen's state machine. Time comes in through tick(), so pacing is testable
@@ -30,6 +41,7 @@ struct TurnIndicator {
 class BattleController {
 public:
     static constexpr double kDefaultComputerDelay = 0.8;
+    static constexpr double kComputerHelpShowSeconds = 1.6;
 
     BattleController(bs::core::GameSession& session,
                      std::unique_ptr<bs::core::ITargetingStrategy> strategy, bs::core::IRandom& rng,
@@ -54,6 +66,7 @@ public:
     // Performs at most one computer action per computer delay.
     std::vector<bs::core::CellChange> tick(double dtSeconds);
     TurnIndicator turnIndicator() const;
+    const HelpReport& computerHelpReport() const { return computerHelp_; }
 
 private:
     void afterShot(const bs::core::ShotOutcome& outcome, bs::core::Side shooter);
@@ -70,6 +83,9 @@ private:
     bool computerFirstAction_ = true;
     Mode mode_ = Mode::AwaitingPlayer;
     Mode modeBeforeExit_ = Mode::AwaitingPlayer;
+    bool extraShot_ = false;
+    HelpReport computerHelp_;
+    double computerHelpShown_ = 0.0;
 };
 
 } // namespace app

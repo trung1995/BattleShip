@@ -19,6 +19,15 @@ Launch ─▶ Main Menu ── New Game ─▶ Difficulty pick ─▶ Placement 
                                                                (Battle exit needs confirmation, FR-044)
 ```
 
+> **Redesign v2 "Blood & Black Water" (2026-10-20)**: the visual reference is the claude.ai/design
+> project "Battleship pirate redesign", file `Battleship Pirate Mockups v2`. Storm backdrops,
+> tilted torn parchment sheets, blood-red primary buttons, tar secondary, gold "safe" and Help;
+> Playfair Display SC for headings and buttons. The battle screen adds a gold "Hit! Fire again"
+> banner, a Help column (button, use pips, "n of 3 left", Cancel), a red "{computer} unleashes
+> Help!" banner with a result bar, and a cross strike that flares all cells at once (FR-048).
+> A developer screenshot tour (`BS_SCREENSHOTS=<folder>`, `src/game/tools/ScreenshotTour`)
+> renders every screen in all three languages for the layout pass.
+
 ## Main Menu
 - **Buttons**: New Game, Settings, Quit.
 - **Music**: Menu track (if music is on).

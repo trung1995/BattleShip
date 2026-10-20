@@ -46,7 +46,9 @@ ActionFeedback BattleController::onPlayerFire(bs::core::Coord target) {
     if (outcome.status != ActionStatus::Applied) {
         return rejection(outcome.status);
     }
+    computerHelp_ = HelpReport{};
     afterShot(outcome, Side::Player);
+    extraShot_ = !outcome.turnPassed && !outcome.gameOver;
     ActionFeedback feedback;
     feedback.status = ActionStatus::Applied;
     feedback.changes = outcome.changes;
@@ -71,6 +73,7 @@ void BattleController::finishOrPass(bool gameOver, bool turnPassed, Side shooter
         mode_ = shooter == Side::Player ? Mode::ComputerActing : Mode::AwaitingPlayer;
         elapsed_ = 0.0;
         computerFirstAction_ = true;
+        extraShot_ = false;
     }
 }
 
@@ -94,10 +97,12 @@ ActionFeedback BattleController::onPlayerHelp(bs::core::Coord centre) {
     if (outcome.status != ActionStatus::Applied) {
         return rejection(outcome.status); // stays in targeting mode
     }
+    computerHelp_ = HelpReport{};
     afterHelp(outcome, Side::Player);
     ActionFeedback feedback;
     feedback.status = ActionStatus::Applied;
     feedback.changes = outcome.changes;
+    feedback.helpCells = outcome.affected;
     return feedback;
 }
 
@@ -128,6 +133,12 @@ void BattleController::cancelExit() {
 bool BattleController::confirmExit() { return mode_ == Mode::ConfirmExit; }
 
 std::vector<bs::core::CellChange> BattleController::tick(double dtSeconds) {
+    if (computerHelp_.active && (mode_ == Mode::AwaitingPlayer || mode_ == Mode::PlayerHelpTargeting)) {
+        computerHelpShown_ += dtSeconds;
+        if (computerHelpShown_ >= kComputerHelpShowSeconds) {
+            computerHelp_ = HelpReport{};
+        }
+    }
     if (mode_ != Mode::ComputerActing) {
         return {};
     }
@@ -147,6 +158,15 @@ std::vector<bs::core::CellChange> BattleController::tick(double dtSeconds) {
         if (outcome.status != ActionStatus::Applied) {
             return {};
         }
+        computerHelp_ = HelpReport{};
+        computerHelp_.active = true;
+        computerHelp_.cells = outcome.affected;
+        for (const bs::core::Coord c : outcome.affected) {
+            const bs::core::Knowledge now = session_.viewOf(Side::Player).at(c);
+            const bool hit = now == bs::core::Knowledge::Hit || now == bs::core::Knowledge::Sunk;
+            ++(hit ? computerHelp_.hits : computerHelp_.misses);
+        }
+        computerHelpShown_ = 0.0;
         afterHelp(outcome, Side::Computer);
         return outcome.changes;
     }
@@ -162,6 +182,8 @@ TurnIndicator BattleController::turnIndicator() const {
     TurnIndicator indicator;
     indicator.gameOver = mode_ == Mode::GameOver;
     indicator.side = session_.currentTurn();
+    indicator.extraShot = extraShot_ && indicator.side == Side::Player && !indicator.gameOver;
+    indicator.computerHelp = computerHelp_.active && !indicator.gameOver;
     return indicator;
 }
 

@@ -6,8 +6,8 @@
 #include "bs/core/GameSession.h"
 #include "cocos2d.h"
 
-// Draws one 10 x 10 sea chart: a parchment grid in a wooden frame with numbered axes, optional
-// own ships, shot knowledge, a placement preview and a target hover. Pure drawing; it makes no
+// Draws one 10 x 10 sea chart: a scorched parchment grid in a timber frame with numbered axes,
+// optional own ships, shot knowledge, a placement preview, a target hover and the Help strike. Pure drawing; it makes no
 // game decisions. The node's origin is the grid's bottom-left corner; the frame extends beyond.
 class BoardNode final : public cocos2d::Node {
 public:
@@ -28,6 +28,8 @@ public:
     void clearPreview();
     void setHover(bs::core::Coord cell); // a red target ring, or "not allowed" on a fired cell
     void clearHover();
+    // Every cell of a Help cross flares at once, then fades to reveal its result (FR-048).
+    void strike(const std::vector<bs::core::Coord>& cells);
     void redraw();
 
     // Maps a world position (e.g. a mouse click) to a board cell.
@@ -44,11 +46,15 @@ private:
     void drawPreview();
     void drawHover();
     void drawMark(bs::core::Coord cell, bs::core::Knowledge knowledge);
+    void drawStrike(float strength);
     bs::core::Knowledge knowledgeAt(bs::core::Coord cell) const;
 
     float cellSize_;
     cocos2d::DrawNode* frame_ = nullptr;
     cocos2d::DrawNode* draw_ = nullptr;
+    cocos2d::DrawNode* blast_ = nullptr;
+    std::vector<bs::core::Coord> strike_;
+    float strikeAge_ = 0.0f;
     const bs::core::Fleet* fleet_ = nullptr;
     bs::core::ShipId selected_ = -1;
     std::array<bs::core::Knowledge, bs::core::kBoardSize * bs::core::kBoardSize> knowledge_{};

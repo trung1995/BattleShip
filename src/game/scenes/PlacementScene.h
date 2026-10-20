@@ -41,6 +41,7 @@ private:
     ShipNode* ghost_ = nullptr;
     cocos2d::DrawNode* reasonMark_ = nullptr;
     LocalizedLabel* reason_ = nullptr;
+    LocalizedLabel* missing_ = nullptr; // under Start battle while ships are missing
     TextButton* start_ = nullptr;
     Toast* toast_ = nullptr;
     int grabOffset_ = 0; // which cell of the ship the cursor holds

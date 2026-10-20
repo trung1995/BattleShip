@@ -30,9 +30,16 @@ value   := any UTF-8 text; "\n" inside the value is a newline; "{" ident "}" is 
 | `name.computer` | Computer | Компьютер | Máy tính |
 | `name.player_default` | Player | Игрок | Người chơi |
 | `battle.winner` | {name} wins! | {name} побеждает! | {name} chiến thắng! |
-| `battle.help` | Help ({count}) | Помощь ({count}) | Trợ giúp ({count}) |
-| `battle.help.used` | Help used up | Помощь израсходована | Đã hết trợ giúp |
-| `battle.computer_help` | Help: {count} | Помощь: {count} | Trợ giúp: {count} |
+| `battle.help` | Help | Помощь | Trợ giúp |
+| `battle.help.used` | Used up | Исчерпана | Đã hết |
+| `battle.help.left` | {n} of 3 left | Осталось {n} из 3 | Còn {n}/3 |
+| `battle.help.result` | Enemy cross: hits {hits}, misses {misses} | Крест противника: попаданий {hits}, промахов {misses} | Chữ thập của đối phương: trúng {hits}, trượt {misses} |
+| `battle.turn.extra` | Hit! Fire again | Попадание! Ещё выстрел | Trúng! Bắn tiếp |
+| `battle.turn.computer_help` | {name} unleashes Help! | {name} бьёт Помощью! | {name} tung Trợ giúp! |
+
+Redesign v2 (2026-10-20) also added `battle.help.cancel`, `battle.hint.extra`,
+`placement.missing` and `settings.name_hint`, and dropped `battle.computer_help`: the computer's
+counter reuses `battle.help` with pips and a numeral.
 
 The full catalogue covers:
 - the menu, difficulty pick, settings and placement screens, including the placement errors

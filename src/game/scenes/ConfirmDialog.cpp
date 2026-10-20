@@ -18,25 +18,30 @@ ConfirmDialog* ConfirmDialog::create(bs::app::ILocalizer& localizer, const Spec&
     return nullptr;
 }
 
-// Cancel is the safe brass default; confirm is the red wax "destructive" choice.
+// Cancel is the safe gold default; confirm is the blood-red "destructive" choice. The dialog is
+// a torn sheet over the dimmed battle, tilted a little.
 bool ConfirmDialog::initDialog(bs::app::ILocalizer& localizer, const Spec& spec) {
-    if (!LayerColor::initWithColor(cocos2d::Color4B(10, 6, 3, 179))) {
+    if (!LayerColor::initWithColor(cocos2d::Color4B(4, 5, 6, 199))) {
         return false;
     }
-    auto sheet = decor::canvas();
-    decor::panel(sheet, cocos2d::Rect(360, 236, 560, 248), 12.0f, decor::woodPanel());
+    auto sheet = cocos2d::Node::create();
+    sheet->setPosition(640, 360);
+    sheet->setRotation(-0.8f);
     addChild(sheet);
+    auto paper = decor::canvas();
+    decor::tornSheet(paper, cocos2d::Rect(-290, -116, 580, 232), theme::kParchment, theme::kParchmentBurn, 40.0f);
+    sheet->addChild(paper);
 
     auto title = LocalizedLabel::forKey(localizer, spec.title, 36.0f, theme::Face::CapsHeavy);
     title->setTextColor(theme::kInk);
-    title->setMaxWidth(480.0f);
-    title->setPosition(640, 420);
-    addChild(title);
+    title->setMaxWidth(500.0f);
+    title->setPosition(0, 60);
+    sheet->addChild(title);
     auto message = LocalizedLabel::forKey(localizer, spec.message, 20.0f);
     message->setTextColor(theme::kInk);
-    message->setMaxWidth(480.0f);
-    message->setPosition(640, 370);
-    addChild(message);
+    message->setMaxWidth(500.0f);
+    message->setPosition(0, 10);
+    sheet->addChild(message);
 
     const cocos2d::Size buttonSize(200, 54);
     auto cancel = TextButton::forKey(
@@ -46,9 +51,9 @@ bool ConfirmDialog::initDialog(bs::app::ILocalizer& localizer, const Spec& spec)
             removeFromParent();
             if (callback) callback();
         },
-        TextButton::Style::Primary);
-    cancel->setPosition(533, 305);
-    addChild(cancel);
+        TextButton::Style::Safe);
+    cancel->setPosition(-107, -53);
+    sheet->addChild(cancel);
     auto confirm = TextButton::forKey(
         localizer, spec.confirmLabel, buttonSize,
         [this] {
@@ -57,8 +62,8 @@ bool ConfirmDialog::initDialog(bs::app::ILocalizer& localizer, const Spec& spec)
             if (callback) callback();
         },
         TextButton::Style::Destructive);
-    confirm->setPosition(747, 305);
-    addChild(confirm);
+    confirm->setPosition(107, -53);
+    sheet->addChild(confirm);
 
     auto blocker = cocos2d::EventListenerTouchOneByOne::create();
     blocker->setSwallowTouches(true);

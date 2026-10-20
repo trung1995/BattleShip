@@ -208,6 +208,11 @@ int  computerHelpUsesLeft() const;               // FR-032: shown next to the co
   side, the list holds the whole cross plus any sunk-ship marking and is rendered as one batch
   (FR-048); `tick` returns a computer Help the same way.
 - The strategy is called with `session.helpUsesLeft(Computer)`, never a bool.
+- Redesign v2: `TurnIndicator` also carries `extraShot` (the player's turn continues after a
+  hit) and `computerHelp` (the computer's Help just landed). `computerHelpReport()` returns the
+  last computer Help's cross cells and its hits and misses; it stays active for
+  `kComputerHelpShowSeconds` (1.6 s) of the player's turn, or until the player acts.
+  `ActionFeedback::helpCells` names an applied player Help's cross, for the strike effect.
 - During `ConfirmExit`, `tick` performs nothing and returns no changes, so cancelling resumes
   the exact state (US6 scenario 2).
 - Exit requests from the placement and game-over screens do not use this controller and

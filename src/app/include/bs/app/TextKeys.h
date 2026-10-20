@@ -43,7 +43,14 @@ namespace app {
     X(BattleHelp, "battle.help")                                                                  \
     X(BattleHelpUsed, "battle.help.used")                                                         \
     X(BattleHelpHint, "battle.help.hint")                                                         \
-    X(BattleComputerHelp, "battle.computer_help")                                                 \
+    X(BattleHelpLeft, "battle.help.left")                                                         \
+    X(BattleHelpCancel, "battle.help.cancel")                                                     \
+    X(BattleHelpResult, "battle.help.result")                                                     \
+    X(BattleTurnExtra, "battle.turn.extra")                                                       \
+    X(BattleTurnComputerHelp, "battle.turn.computer_help")                                        \
+    X(BattleHintExtra, "battle.hint.extra")                                                       \
+    X(PlacementMissing, "placement.missing")                                                      \
+    X(SettingsNameHint, "settings.name_hint")                                                     \
     X(BattleWinner, "battle.winner")                                                              \
     X(GameOverNewGame, "gameover.new_game")                                                       \
     X(GameOverMenu, "gameover.menu")                                                              \

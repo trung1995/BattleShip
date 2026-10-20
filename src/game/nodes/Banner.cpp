@@ -6,7 +6,7 @@
 #include "nodes/Decor.h"
 
 namespace {
-constexpr float kPadX = 40.0f;
+constexpr float kPadX = 44.0f;
 constexpr float kPadY = 8.0f;
 } // namespace
 
@@ -27,7 +27,7 @@ bool Banner::initBanner(LocalizedLabel::Provider provider) {
     provider_ = std::move(provider);
     plaque_ = decor::canvas();
     addChild(plaque_);
-    label_ = LocalizedLabel::create(localizer_, provider_, 30.0f, theme::Face::CapsHeavy);
+    label_ = LocalizedLabel::create(localizer_, provider_, 29.0f, theme::Face::CapsHeavy);
     label_->setMaxWidth(900.0f);
     addChild(label_);
     redraw();
@@ -51,6 +51,7 @@ void Banner::refresh() {
 
 void Banner::redraw() {
     shown_ = provider_ ? provider_() : std::string();
+    label_->refresh(); // the plaque is sized to the text it is about to show
     plaque_->clear();
     if (shown_.empty()) {
         return;
@@ -58,22 +59,41 @@ void Banner::redraw() {
     const cocos2d::Size text = label_->getContentSize();
     const cocos2d::Rect box(-text.width / 2 - kPadX, -text.height / 2 - kPadY, text.width + kPadX * 2,
                             text.height + kPadY * 2);
-    const decor::Poly shape = decor::roundedRect(box, 3.0f);
-    decor::softShadow(plaque_, box, 3.0f, cocos2d::Vec2(0.0f, -10.0f), 24.0f, theme::rgba(0, 0, 0, 0.5f));
-    if (style_ == Style::Parchment) {
-        decor::fill(plaque_, decor::roundedRect(cocos2d::Rect(box.getMinX() - 5.0f, box.getMinY() - 5.0f,
-                                                              box.size.width + 10.0f, box.size.height + 10.0f),
-                                                7.0f),
-                    theme::rgba(224, 176, 78, 0.22f));
-        decor::fill(plaque_, shape, theme::kParchment);
-        decor::innerShadow(plaque_, box, 14.0f, theme::rgba(120, 80, 30, 0.35f));
-        decor::stroke(plaque_, shape, 2.0f, theme::kBrassDeep);
-        label_->setTextColor(theme::kInk);
-    } else {
-        decor::fill(plaque_, shape, theme::rgba(0x7e, 0x24, 0x16));
-        decor::stroke(plaque_, shape, 2.0f, theme::kWaxEdge);
-        label_->setTextColor(theme::kWaxText);
+    struct Look {
+        cocos2d::Color4F fill, edge, glow;
+        cocos2d::Color3B text;
+        float tilt; // degrees, clockwise
+    };
+    Look look{theme::kParchment, theme::kGoldTarnish, theme::rgba(0, 0, 0, 0.0f), theme::kInk, -1.5f};
+    switch (style_) {
+    case Style::Parchment:
+        break;
+    case Style::Gold:
+        look = {theme::kGoldPip, theme::kGoldPale, theme::rgba(224, 176, 78, 0.35f), theme::kInk, -1.5f};
+        break;
+    case Style::Wax:
+        look = {theme::kBloodDark, theme::kBlood, theme::rgba(0, 0, 0, 0.0f), theme::kCream, 1.2f};
+        break;
+    case Style::Blood:
+        look = {theme::kBloodDeep, theme::kEmber, theme::rgba(224, 64, 46, 0.55f), theme::kCream, 1.2f};
+        break;
     }
+    setRotation(look.tilt);
+    decor::softShadow(plaque_, box, 2.0f, cocos2d::Vec2(0.0f, -10.0f), 24.0f, theme::rgba(0, 0, 0, 0.6f));
+    if (look.glow.a > 0.0f) {
+        decor::softShadow(plaque_, box, 2.0f, cocos2d::Vec2::ZERO, 44.0f, look.glow);
+        decor::fill(plaque_, decor::roundedRect(cocos2d::Rect(box.getMinX() - 4.0f, box.getMinY() - 4.0f,
+                                                              box.size.width + 8.0f, box.size.height + 8.0f),
+                                                4.0f),
+                    cocos2d::Color4F(look.glow.r, look.glow.g, look.glow.b, look.glow.a * 0.55f));
+    }
+    const decor::Poly shape = decor::roundedRect(box, 1.0f);
+    decor::fill(plaque_, shape, look.fill);
+    if (style_ == Style::Parchment) {
+        decor::innerShadow(plaque_, box, 12.0f, theme::rgba(60, 22, 6, 0.35f));
+    }
+    decor::stroke(plaque_, shape, 2.0f, look.edge);
+    label_->setTextColor(look.text);
 }
 
 void Banner::onEnter() {

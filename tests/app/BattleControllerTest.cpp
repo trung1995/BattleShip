@@ -279,6 +279,71 @@ TEST_F(BattleControllerTest, StrategyIsToldHowManyHelpUsesTheComputerHasLeft) {
     EXPECT_EQ(strategy->lastHelpUsesLeft, kHelpUsesPerGame - 1);
 }
 
+// The turn banner tells an extra shot apart from a fresh turn (redesign v2).
+TEST_F(BattleControllerTest, TurnIndicatorFlagsTheExtraShotAfterAHit) {
+    start({shot(9, 9)});
+    EXPECT_FALSE(controller->turnIndicator().extraShot);
+    controller->onPlayerFire({0, 0}); // hit: the player fires again
+    EXPECT_TRUE(controller->turnIndicator().extraShot);
+    controller->armHelp(); // still the extra shot while choosing a Help centre
+    EXPECT_TRUE(controller->turnIndicator().extraShot);
+    controller->disarmHelp();
+    controller->onPlayerFire({9, 8}); // miss: the turn passes
+    EXPECT_FALSE(controller->turnIndicator().extraShot);
+    controller->tick(1.0);            // computer misses; a fresh player turn
+    ASSERT_EQ(controller->mode(), Mode::AwaitingPlayer);
+    EXPECT_FALSE(controller->turnIndicator().extraShot);
+}
+
+TEST_F(BattleControllerTest, ComputerHelpIsReportedWithItsCellsAndScore) {
+    start({help(0, 1)}, Difficulty::Hard);
+    controller->onPlayerFire({9, 9});
+    EXPECT_FALSE(controller->computerHelpReport().active);
+    controller->tick(1.0);
+    const HelpReport& report = controller->computerHelpReport();
+    ASSERT_TRUE(report.active);
+    // The cross (0,1),(1,1),(0,0),(0,2) over the 4-cell ship in row 0: three hits, one miss.
+    EXPECT_EQ(report.cells, (std::vector<Coord>{{0, 1}, {1, 1}, {0, 0}, {0, 2}}));
+    EXPECT_EQ(report.hits, 3);
+    EXPECT_EQ(report.misses, 1);
+    EXPECT_TRUE(controller->turnIndicator().computerHelp);
+    EXPECT_EQ(controller->turnIndicator().side, Side::Player);
+}
+
+TEST_F(BattleControllerTest, ComputerHelpReportFadesAfterItsDisplayTime) {
+    start({help(7, 4)}, Difficulty::Hard);
+    controller->onPlayerFire({9, 9});
+    controller->tick(1.0);
+    ASSERT_TRUE(controller->computerHelpReport().active);
+    controller->tick(BattleController::kComputerHelpShowSeconds / 2);
+    EXPECT_TRUE(controller->computerHelpReport().active);
+    controller->requestExit(); // frozen while the exit prompt is open
+    controller->tick(10.0);
+    controller->cancelExit();
+    EXPECT_TRUE(controller->computerHelpReport().active);
+    controller->tick(BattleController::kComputerHelpShowSeconds);
+    EXPECT_FALSE(controller->computerHelpReport().active);
+    EXPECT_FALSE(controller->turnIndicator().computerHelp);
+}
+
+TEST_F(BattleControllerTest, ThePlayersNextActionClearsTheComputerHelpReport) {
+    start({help(7, 4), shot(9, 9)}, Difficulty::Hard);
+    controller->onPlayerFire({9, 9});
+    controller->tick(1.0);
+    ASSERT_TRUE(controller->computerHelpReport().active);
+    controller->onPlayerFire({9, 8});
+    EXPECT_FALSE(controller->computerHelpReport().active);
+}
+
+TEST_F(BattleControllerTest, PlayerHelpFeedbackNamesTheCrossCells) {
+    start({});
+    controller->armHelp();
+    const ActionFeedback feedback = controller->onPlayerHelp({9, 0}); // corner: three cells
+    ASSERT_EQ(feedback.status, ActionStatus::Applied);
+    EXPECT_EQ(feedback.helpCells, (std::vector<Coord>{{9, 0}, {8, 0}, {9, 1}}));
+    EXPECT_TRUE(controller->onPlayerFire({0, 0}).helpCells.empty());
+}
+
 TEST_F(BattleControllerTest, ExitRequestFreezesTheBattleUntilCancelled) {
     start({shot(9, 9)});
     controller->onPlayerFire({9, 9}); // computer to act
