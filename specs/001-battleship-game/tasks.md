@@ -1271,3 +1271,9 @@ Each step leaves all earlier stories working, and the full test suite must stay 
   `ctest -LE sim` green.
 - Every new user-facing string goes into all three `.lang` files in the same commit.
 - Stop at any checkpoint to validate a story on its own.
+
+---
+
+## Phase 12: Convergence
+
+- [ ] T137 [US4] Keep whose turn it is unambiguous while the computer's Help report is shown: either show "Your turn" in the banner and keep the Help result in the hint bar and counter, or treat the report as the end of the computer's turn and reject player input until it fades (test-first in `tests/app/BattleControllerTest.cpp`, then `src/app/src/BattleController.cpp` and `src/game/scenes/BattleScene.cpp`) per FR-024 (partial)
