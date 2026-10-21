@@ -22,7 +22,7 @@ ScreenshotTour::ScreenshotTour(GameServices& services, std::string folder)
 
 void ScreenshotTour::start() {
     originalLanguage_ = static_cast<int>(services_.settings().language());
-    for (const char* code : {"en", "ru", "vi"}) {
+    for (const char* code : {"en", "ru", "vi", "uk"}) {
         addLanguage(code);
     }
     steps_.push_back([this] {
@@ -48,7 +48,7 @@ void ScreenshotTour::next(float dt) {
 
 void ScreenshotTour::addLanguage(const std::string& code) {
     steps_.push_back([this, code] {
-        const Language language = code == "ru" ? Language::Ru : code == "vi" ? Language::Vi : Language::En;
+        const Language language = code == "ru" ? Language::Ru : code == "vi" ? Language::Vi : code == "uk" ? Language::Uk : Language::En;
         services_.settings().setLanguage(language);
         services_.localizer().setLanguage(language);
         services_.navigator().showMenu();

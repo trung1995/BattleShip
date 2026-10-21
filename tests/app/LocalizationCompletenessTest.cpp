@@ -61,13 +61,13 @@ TEST_P(LocalizationCompleteness, NoEmptyValues) {
 }
 
 INSTANTIATE_TEST_SUITE_P(AllLanguages, LocalizationCompleteness,
-                         ::testing::Values("en", "ru", "vi"));
+                         ::testing::Values("en", "ru", "vi", "uk"));
 
 TEST(LocalizationCompleteness, LanguageNamesAreTheSameInEveryFile) {
     const StringTable en = load("en");
-    for (const char* code : {"ru", "vi"}) {
+    for (const char* code : {"ru", "vi", "uk"}) {
         const StringTable other = load(code);
-        for (const char* key : {"lang.en", "lang.ru", "lang.vi"}) {
+        for (const char* key : {"lang.en", "lang.ru", "lang.vi", "lang.uk"}) {
             ASSERT_NE(other.find(key), nullptr) << code << " " << key;
             ASSERT_NE(en.find(key), nullptr) << key;
             EXPECT_EQ(*other.find(key), *en.find(key)) << code << " " << key;

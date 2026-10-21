@@ -9,7 +9,7 @@
 namespace bs {
 namespace app {
 
-enum class Language { En, Ru, Vi };
+enum class Language { En, Ru, Vi, Uk };
 enum class Screen { Menu, Settings, Placement, Battle };
 
 struct NameResult {

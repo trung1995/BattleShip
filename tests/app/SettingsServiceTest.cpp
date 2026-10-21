@@ -27,9 +27,11 @@ TEST(SettingsService, SettersPersistImmediatelyUnderTheContractKeys) {
     EXPECT_EQ(store.strings.at("settings.language"), "ru");
     settings.setLanguage(Language::Vi);
     EXPECT_EQ(store.strings.at("settings.language"), "vi");
+    settings.setLanguage(Language::Uk);
+    EXPECT_EQ(store.strings.at("settings.language"), "uk");
     settings.setPlayerName("Ann");
     EXPECT_EQ(store.strings.at("settings.playerName"), "Ann");
-    EXPECT_EQ(store.flushCount, 5);
+    EXPECT_EQ(store.flushCount, 6);
 }
 
 TEST(SettingsService, UnknownLanguageFallsBackToEnglish) {

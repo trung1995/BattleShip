@@ -31,7 +31,8 @@ std::string SettingsController::filterNameInput(const std::string& utf8) const {
 NameResult SettingsController::commitName(const std::string& utf8) { return settings_.setPlayerName(utf8); }
 
 std::vector<std::pair<Language, TextKey>> SettingsController::languages() const {
-    return {{Language::En, TextKey::LangEn}, {Language::Ru, TextKey::LangRu}, {Language::Vi, TextKey::LangVi}};
+    return {{Language::En, TextKey::LangEn}, {Language::Ru, TextKey::LangRu}, {Language::Vi, TextKey::LangVi},
+            {Language::Uk, TextKey::LangUk}};
 }
 
 } // namespace app

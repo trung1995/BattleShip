@@ -36,11 +36,17 @@ Language SettingsService::language() const {
     if (code == "vi") {
         return Language::Vi;
     }
+    if (code == "uk") {
+        return Language::Uk;
+    }
     return Language::En; // unknown values fall back to English
 }
 
 void SettingsService::setLanguage(Language language) {
-    const char* code = language == Language::Ru ? "ru" : language == Language::Vi ? "vi" : "en";
+    const char* code = language == Language::Ru   ? "ru"
+                       : language == Language::Vi ? "vi"
+                       : language == Language::Uk ? "uk"
+                                                  : "en";
     store_.setString(kLanguage, code);
     store_.flush();
 }

@@ -20,6 +20,8 @@ const char* Localizer::languageCode(Language language) {
         return "ru";
     case Language::Vi:
         return "vi";
+    case Language::Uk:
+        return "uk";
     }
     return "en";
 }

@@ -7,7 +7,7 @@
 namespace bs {
 namespace app {
 
-// Every user-facing string key. Each must exist in Resources/i18n/{en,ru,vi}.lang
+// Every user-facing string key. Each must exist in Resources/i18n/{en,ru,vi,uk}.lang
 // (LocalizationCompletenessTest, Principle IV).
 #define BS_TEXT_KEYS(X)                                                                           \
     X(AppTitle, "app.title")                                                                      \
@@ -16,6 +16,7 @@ namespace app {
     X(LangEn, "lang.en")                                                                          \
     X(LangRu, "lang.ru")                                                                          \
     X(LangVi, "lang.vi")                                                                          \
+    X(LangUk, "lang.uk")                                                                          \
     X(MenuNewGame, "menu.new_game")                                                               \
     X(MenuSettings, "menu.settings")                                                              \
     X(MenuQuit, "menu.quit")                                                                      \

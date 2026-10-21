@@ -74,8 +74,8 @@ bool SettingsScene::init() {
 
     // Language names are always shown in their own language (contracts/ui-screens.md).
     addRowLabel(TextKey::SettingsLanguage, 20.0f);
-    const float widths[] = {112.0f, 112.0f, 124.0f};
-    const float groupLeft = kRight - (widths[0] + widths[1] + widths[2]);
+    const float widths[] = {108.0f, 108.0f, 120.0f, 128.0f};
+    const float groupLeft = kRight - (widths[0] + widths[1] + widths[2] + widths[3]);
     auto group = decor::canvas();
     decor::stroke(group, decor::roundedRect(cocos2d::Rect(groupLeft - 0.5f, -0.5f, kRight - groupLeft + 1.0f, 41.0f), 3.0f),
                   1.0f, theme::rgba(0x3a, 0x1a, 0x12));

@@ -118,7 +118,7 @@ const cocos2d::Color3B kGoldText = rgb(0xf0, 0xcf, 0x86);
 constexpr float kCellSize = 36.0f;
 
 // Playfair Display SC (headings, buttons, banners) and Alegreya (body): both OFL, with Latin,
-// Cyrillic and Vietnamese.
+// Cyrillic (Russian and Ukrainian) and Vietnamese.
 enum class Face { Body, Italic, Caps, CapsHeavy };
 inline const char* fontFile(Face face) {
     switch (face) {

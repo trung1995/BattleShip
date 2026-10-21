@@ -43,7 +43,7 @@ private:
     ToggleSwitch* music_ = nullptr;
     LocalizedLabel* soundState_ = nullptr; // "On" / "Off" beside each switch
     LocalizedLabel* musicState_ = nullptr;
-    TextButton* languageButtons_[3] = {};
+    TextButton* languageButtons_[4] = {};
     cocos2d::ui::TextField* name_ = nullptr;
     cocos2d::DrawNode* nameFrame_ = nullptr;
     cocos2d::Label* nameCount_ = nullptr;

@@ -5,6 +5,7 @@ name.player_default = Player
 lang.en = English
 lang.ru = Русский
 lang.vi = Tiếng Việt
+lang.uk = Українська
 menu.new_game = New Game
 menu.settings = Settings
 menu.quit = Quit

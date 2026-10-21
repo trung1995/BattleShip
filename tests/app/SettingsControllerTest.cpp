@@ -57,13 +57,15 @@ TEST_F(SettingsControllerTest, CommittingALongNameStoresTheFirstTwentyCodePoints
     EXPECT_TRUE(result.truncated);
 }
 
-TEST_F(SettingsControllerTest, OffersTheThreeLanguagesWithTheirNames) {
+TEST_F(SettingsControllerTest, OffersTheFourLanguagesWithTheirNames) {
     const auto languages = controller.languages();
-    ASSERT_EQ(languages.size(), 3u);
+    ASSERT_EQ(languages.size(), 4u);
     EXPECT_EQ(languages[0].first, Language::En);
     EXPECT_EQ(languages[0].second, TextKey::LangEn);
     EXPECT_EQ(languages[1].first, Language::Ru);
     EXPECT_EQ(languages[1].second, TextKey::LangRu);
     EXPECT_EQ(languages[2].first, Language::Vi);
     EXPECT_EQ(languages[2].second, TextKey::LangVi);
+    EXPECT_EQ(languages[3].first, Language::Uk);
+    EXPECT_EQ(languages[3].second, TextKey::LangUk);
 }
